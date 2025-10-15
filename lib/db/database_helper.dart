@@ -1,6 +1,9 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
+import '../models/habit.dart';
+import '../models/habit_log.dart';
+
 //Create and Initialize Database
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper.internal();
@@ -45,38 +48,57 @@ class DatabaseHelper {
   }
 
 // Add habit
-  Future<int> insertHabit(Map<String, dynamic> habit) async {
+  Future<int> insertHabit(Habit habit) async {
     final db = await database;
-    return await db.insert('habits', habit);
+    return await db.insert('habits', habit.toMap());
   }
 
   // Get all habits
-  Future<List<Map<String, dynamic>>> getHabits() async {
+  Future<List<Habit>> getHabits() async {
     final db = await database;
-    return await db.query('habits');
+    final result = await db.query('habits');
+    return result.map((map) => Habit.fromMap(map)).toList();
+  }
+
+  //update Habit
+  Future<int> updateHabit(Habit habit) async {
+    final db = await database;
+      return await db.update(
+      'habits',
+      habit.toMap(),
+      where: 'id = ?',
+      whereArgs: [habit.id],
+    );
   }
 
   // Add habit log
-  Future<int> insertHabitLog(Map<String, dynamic> log) async {
+  Future<int> insertHabitLog(HabitLog log) async {
     final db = await database;
-    return await db.insert('habit_logs', log);
+    return await db.insert('habit_logs', log.toMap());
   }
+
 
   // Get logs for a habit
-  Future<List<Map<String, dynamic>>> getHabitLogs(int habitId) async {
+  Future<List<HabitLog>> getHabitLogs(int habitId) async {
     final db = await database;
-    return await db.query('habit_logs', where: 'habit_id = ?', whereArgs: [habitId]);
-  }
+    final result = await db.query('habit_logs', where: 'habit_id = ?', whereArgs: [habitId]);
+    return result.map((map) => HabitLog.fromMap(map)).toList();  }
 
   // Update habit log (e.g., mark completed)
-  Future<int> updateHabitLog(Map<String, dynamic> log) async {
+  Future<int> updateHabitLog(HabitLog log) async {
     final db = await database;
-    return await db.update('habit_logs', log, where: 'id = ?', whereArgs: [log['id']]);
+    return await db.update(
+    'habit_logs',
+    log.toMap(),
+    where: 'id = ?',
+    whereArgs: [log.id],
+    );
   }
 
   // Delete habit
   Future<int> deleteHabit(int id) async {
     final db = await database;
+    await db.delete('habit_logs', where: 'habit_id = ?', whereArgs: [id]);
     return await db.delete('habits', where: 'id = ?', whereArgs: [id]);
   }
 }

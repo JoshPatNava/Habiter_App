@@ -1,3 +1,4 @@
+
 class HabitLog {
   int? id;
   int habitId;             // foreign key to Habit
@@ -12,6 +13,21 @@ class HabitLog {
   });
 
   // Convert HabitLog to Map (database)
-
+Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'habitId': habitId,
+      'date': date,
+      'completed':completed
+    }; 
+  }
   // Create HabitLog from Map (database)
+   factory HabitLog.fromMap(Map<String, dynamic> map) {
+    return HabitLog(
+      id: map['id'],
+      habitId: map['habit_id'],
+      date: map['date'],
+      completed: map['completed'] == 1,
+    );
+  }
 }
