@@ -1,108 +1,134 @@
 import 'package:flutter/material.dart';
-import 'stat_page.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:table_calendar/table_calendar.dart';
 
-class MyHomePage extends StatelessWidget {
+class MyHomePage extends StatefulWidget {
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();  
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  DateTime today = DateTime.now();
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+  bool _showInfoState = false;
+
   @override
   Widget build(BuildContext context) {
 
     return Scaffold(
       backgroundColor: Color(0xff7886c7),
       body: Center(
-        child: ListView(
-          scrollDirection: Axis.vertical,
-          children: [
-
-            Padding(
-              padding: const EdgeInsets.only(top: 100),
-              child: Container(
-                height: 200,
-                width: 360,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(25),
-                  color: Color(0xfffff2f2),
-                ),
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.only(top: 50),
-              child: Container(
-                height: 200,
-                width: 360,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(25),
-                  color: Color(0xfffff2f2),
-                ),
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.only(top: 50),
-              child: Container(
-                height: 200,
-                width: 360,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(25),
-                  color: Color(0xfffff2f2),
-                ),
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.only(top: 50),
-              child: Container(
-                height: 200,
-                width: 360,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(25),
-                  color: Color(0xfffff2f2),
-                ),
-              ),
-            ),
-
-          ],
-        ),
-      ),
-      bottomNavigationBar: BottomAppBar(
-        color: Color(0xffffdada),
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 5.0,
-        clipBehavior: Clip.hardEdge,
-        child: SizedBox(
-          height: kBottomNavigationBarHeight,
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: <Widget>[
-              IconButton(
-                color: Color(0xff2d336b),
-                iconSize: 50,
-                icon: const Icon(Icons.home),
-                onPressed: () {
-                  
-                },
-              ),
-              IconButton(
-                color: Color(0xff2d336b),
-                iconSize: 50,
-                icon: const Icon(Icons.add),
-                onPressed: () {
-                  
-                },
-              ),
-              IconButton(
-                color: Color(0xff2d336b),
-                iconSize: 50,
-                icon: const Icon(Icons.list_alt_outlined),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => StatPage())
+        child: Stack(
+          children: <Widget> [
+            IgnorePointer(
+              ignoring: _showInfoState,
+              child: ListView.builder(
+                scrollDirection: Axis.vertical,
+                shrinkWrap: true,
+                itemCount: 11,
+                itemBuilder:(context, index) {
+                  if (index == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        child: TableCalendar(
+                          locale: "en_US",
+                          headerStyle: HeaderStyle(
+                            titleCentered: true,
+                            formatButtonVisible: false,
+                            headerMargin: EdgeInsets.only(bottom: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.redAccent,
+                              borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+                            )
+                          ),
+                          
+                          focusedDay: _focusedDay, 
+                          firstDay: DateTime.utc(2025, 10, 1), 
+                          lastDay: DateTime.utc(today.year + 1, today.month + 1, 0),
+                          selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                          onDaySelected: (selectedDay, focusedDay) {
+                            setState(() {
+                              _selectedDay = selectedDay;
+                              _focusedDay = focusedDay;
+                              _showInfoState = true;
+                            });
+                          },
+                        ),
+                      ),
+                    );
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 30),
+                    child: Container(
+                      height: 200,
+                      width: 360,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(25),
+                        color: Color(0xfffff2f2),
+                      ),
+                      child: Center(
+                        child: Text(
+                          "Habit $index Basic Info/Stats\n...\n...",
+                          style: GoogleFonts.openSans(
+                            fontSize: 30,
+                          ),
+                        ),
+                      ),
+                    ),
                   );
                 },
-              )
-            ],
-          ),
+              ),
+            ),
+
+            AnimatedOpacity(
+              opacity: _showInfoState ? 1 : 0,
+              duration: Durations.medium1,
+              child: IgnorePointer(
+                ignoring: !_showInfoState,
+                child: Stack(
+                  children: <Widget> [
+                    Opacity(
+                      opacity: 0.5,
+                      child: Container(
+                        color: Colors.black,
+                      ),
+                    ),
+
+                    TapRegion(
+                      onTapOutside:(tap) {
+                        setState(() {
+                            _showInfoState = false; 
+                            _selectedDay = today;
+                            _focusedDay = today;
+                            });
+                      },
+                      child: Center(
+                        child: Container(
+                          height: 450,
+                          width: 300,
+                          color: Colors.white,
+                          child: Center(
+                            child: Text(
+                              "Habit Data",
+                              style: GoogleFonts.openSans(
+                                fontSize: 30,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ]
         ),
       ),
     );
