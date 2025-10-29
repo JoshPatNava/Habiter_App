@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:table_calendar/table_calendar.dart';
+import '../controller/habit_controller.dart';
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -12,7 +13,8 @@ class _MyHomePageState extends State<MyHomePage> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   bool _showInfoState = false;
-
+  final  HabitController controller = HabitController(); //Connects the homepage to Controller(Logic)
+  //FOr the homepage we need to figure out how to extract the logs from the database and implement them into the calender.
   @override
   Widget build(BuildContext context) {
 
