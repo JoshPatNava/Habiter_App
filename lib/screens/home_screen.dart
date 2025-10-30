@@ -49,10 +49,10 @@ class _MyHomePageState extends State<MyHomePage> {
                               borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
                             )
                           ),
-                          
+                          // Calender 
                           focusedDay: _focusedDay, 
                           firstDay: DateTime.utc(2025, 10, 1), 
-                          lastDay: DateTime.utc(today.year + 1, today.month + 1, 0),
+                          lastDay: DateTime.utc(today.year + 1, today.month + 1, 1).subtract(const Duration(days: 1)),
                           selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
                           onDaySelected: (selectedDay, focusedDay) {
                             setState(() {
