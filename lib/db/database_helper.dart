@@ -56,8 +56,8 @@ class DatabaseHelper {
   // Get all habits
   Future<List<Habit>> getHabits() async {
     final db = await database;
-    final result = await db.query('habits');
-    return result.map((map) => Habit.fromMap(map)).toList();
+    final List<Map<String, dynamic>> maps = await db.query('habits');
+    return List.generate(maps.length, (i) => Habit.fromMap(maps[i]));
   }
 
   //update Habit

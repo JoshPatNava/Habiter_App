@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../controller/habit_controller.dart';
+import '../models/habit.dart';
+import '../models/habit_log.dart';
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -9,12 +11,78 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  //Controller OBJ
+  final HabitController controller = HabitController();
+
   DateTime today = DateTime.now();
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   bool _showInfoState = false;
-  final  HabitController controller = HabitController(); //Connects the homepage to Controller(Logic)
-  //FOr the homepage we need to figure out how to extract the logs from the database and implement them into the calender.
+  
+  //Init for habits and habit logs
+  bool _loading = true;
+  List<Habit> _habits = [];
+  Map<int, Habit> _habitById = {};
+  Map<int, int> _completionCountByHabit = {};
+  Map<DateTime, List<HabitLog>> _logsByDay = {};
+  List<HabitLog> _selectedDayLogs = [];
+
+
+  @override
+  void initState() {
+    super.initState();
+    loadAll();
+  }
+
+  DateTime dateOnly(DateTime dt) => DateTime(dt.year, dt.month, dt.day);
+
+  Future<void> loadAll() async {
+    try {
+      final habits = await controller.getAllHabits();
+      final habitById = <int, Habit>{};
+      for(final h in habits) {
+        habitById[h.id!] = h;
+      }
+
+      final logsByDay = <DateTime, List<HabitLog>>{};
+      final completionCountByHabit = <int, int>{};
+
+      for (final habit in habits) {
+        final logs = await controller.getHabitLogs(habit.id!);
+        completionCountByHabit[habit.id!] = logs.length;
+
+        for (final log in logs) {
+          final logDate = dateOnly(log.date);
+          logsByDay.putIfAbsent(logDate, () => []).add(log);
+        }
+      }
+
+      setState(() {
+        _habits = habits;
+        _habitById = habitById;
+        _logsByDay = logsByDay;
+        _completionCountByHabit = completionCountByHabit;
+        _loading = false;
+      });
+    } catch(e) {
+      setState(() => _loading = false);
+    }
+  }
+
+List<HabitLog> _getEventsForDay(DateTime day) {
+    return _logsByDay[_dateOnly(day)] ?? const [];
+  }
+
+  void _handleDaySelect(DateTime selectedDay, DateTime focusedDay) {
+    final logs = _getEventsForDay(selectedDay);
+    setState(() {
+      _selectedDay = selectedDay;
+      _focusedDay = focusedDay;
+      _selectedDayLogs = logs;
+      _showInfoState = true;
+    });
+  }
+  
   @override
   Widget build(BuildContext context) {
 

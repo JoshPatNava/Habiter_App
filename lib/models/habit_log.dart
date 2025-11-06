@@ -17,8 +17,8 @@ Map<String, dynamic> toMap() {
     return {
       'id': id,
       'habitId': habitId,
-      'date': date,
-      'completed':completed
+      'date': date.toIso8601String(),
+      'completed': completed ? 1 : 0,
     }; 
   }
   // Create HabitLog from Map (database)
@@ -26,7 +26,7 @@ Map<String, dynamic> toMap() {
     return HabitLog(
       id: map['id'],
       habitId: map['habit_id'],
-      date: map['date'],
+      date: DateTime.parse(map['date']),
       completed: map['completed'] == 1,
     );
   }

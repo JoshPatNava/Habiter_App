@@ -2,7 +2,7 @@ class Habit {
   final int? id;
   final String name;
   final String? description;
-  final String frequency;
+  final int frequency;
   final DateTime startDate;
   final int? goalCount;
 
@@ -22,7 +22,7 @@ Map<String, dynamic> toMap() {
       'name': name,
       'description': description,
       'frequency': frequency,
-      'start_date': startDate,
+      'start_date': startDate.toIso8601String(),
       'goal_count': goalCount,
     };
   }
@@ -30,12 +30,14 @@ Map<String, dynamic> toMap() {
 // Create Habit Obj from Map (database retrieval)
 factory Habit.fromMap(Map<String, dynamic> map) {
     return Habit(
-      id: map['id'],
-      name: map['name'],
-      description: map['description'],
-      frequency: map['frequency'],
-      startDate: map['start_date'],
-      goalCount: map['goal_count'],
+      id: map['id'] as int?,
+      name: map['name'] as String,
+      description: map['description'] as String?,
+      frequency: map['frequency'] as int,
+      startDate: DateTime.parse(map['start_date'] as String),
+      goalCount: map['goal_count'] == null
+        ? null
+        : (map['goal_count'] as num).toInt(),
     );
   }
 }
