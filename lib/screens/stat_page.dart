@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:form_builder_validators/form_builder_validators.dart';
 
 class StatPage extends StatefulWidget {
   @override
@@ -9,10 +12,22 @@ class StatPage extends StatefulWidget {
 
 class _MyStatPageState extends State<StatPage> {
   bool _showStatState = false;
+  int _newFreq = 1;
 
   final PanelController _panelController = PanelController();
-  TextEditingController _habitName = TextEditingController();
-  TextEditingController _habitDesc = TextEditingController();
+  final GlobalKey<FormBuilderState> _formKey = GlobalKey<FormBuilderState>();
+  String? _habitName;
+  String? _habitDesc;
+  int? _habitFreq;
+  int? _weeklyFreq;
+  List<DropdownMenuItem<int>> get frequencies{
+    List<DropdownMenuItem<int>> freq = [
+      DropdownMenuItem(value: 1, child: Text("Daily")),
+      DropdownMenuItem(value: 2, child: Text("Weekly")),
+      DropdownMenuItem(value: 3, child: Text("Monthly")),
+    ];
+    return freq;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +37,7 @@ class _MyStatPageState extends State<StatPage> {
         controller: _panelController,
         minHeight: 0,
         maxHeight: MediaQuery.of(context).size.height*0.8,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(50)),
         defaultPanelState: PanelState.CLOSED,
         backdropEnabled: true,
         backdropOpacity: 0.5,
@@ -29,64 +45,102 @@ class _MyStatPageState extends State<StatPage> {
         panel: Center(
           child: Stack(
             children: [
-              Positioned(
-                top: 20,
-                right: 20,
-                child: IconButton(
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  onPressed: () {
-                    if(_panelController.isPanelOpen) {
-                      _panelController.close();
-                    }
-                  },
-                  icon: const Icon(Icons.close),
-                ),
-              ),
-
-              ListView(
-                scrollDirection: Axis.vertical,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 40, left: 40, right: 40),
-                    child: TextField(
-                      controller: _habitName,
-                      decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            width: 2.0,
+              FormBuilder(
+                key: _formKey,
+                skipDisabled: true,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 80, left: 40, right: 40),
+                  child: Column(
+                    children: [
+                      FormBuilderTextField(
+                        name: 'HabitName',
+                        maxLength: 30,
+                        maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                        onTapOutside: (event) {
+                          FocusManager.instance.primaryFocus?.unfocus();
+                        },
+                        decoration: InputDecoration(
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              width: 2.0,
+                            ),
                           ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            width: 2.0,
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              width: 2.0,
+                            ),
                           ),
+                          hintText: "Your Habit Name", // name: _habitName.text
                         ),
-                        hintText: "Your New Habit Name", // name: _habitName.text
+                        validator: FormBuilderValidators.compose([
+                          FormBuilderValidators.required(),
+                        ]),
                       ),
-                    ),
-                  ),
-
-                  Padding(
-                    padding: const EdgeInsets.only(top: 30, left: 40, right: 40),
-                    child: TextField(
-                      controller: _habitDesc,
-                      decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            width: 2.0,
+                      const SizedBox(height: 30),
+                      FormBuilderTextField(
+                        name: 'HabitDesc',
+                        maxLength: 100,
+                        maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                        onTapOutside: (event) {
+                          FocusManager.instance.primaryFocus?.unfocus();
+                        },
+                        decoration: InputDecoration(
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              width: 2.0,
+                            ),
                           ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            width: 2.0,
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              width: 2.0,
+                            ),
                           ),
+                          hintText: "Description...", // name: _habitDesc.text
                         ),
-                        hintText: "Description...", // name: _habitDesc.text
                       ),
-                    ),
+                      const SizedBox(height: 30),
+                      FormBuilderDropdown<int>(
+                        name: 'HabitFreq',
+                        items: frequencies,
+                        initialValue: 1,
+                        onChanged: (value) {
+                          setState(() {
+                            _newFreq = value ?? 1;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 30),
+                      Visibility(
+                        visible: _newFreq == 2,
+                        child: FormBuilderCheckboxGroup(
+                          name: 'Weekdays',
+                          options: const [
+                            FormBuilderFieldOption(value: 'Su'),
+                            FormBuilderFieldOption(value: 'M'),
+                            FormBuilderFieldOption(value: 'Tu'),
+                            FormBuilderFieldOption(value: 'W'),
+                            FormBuilderFieldOption(value: 'Th'),
+                            FormBuilderFieldOption(value: 'F'),
+                            FormBuilderFieldOption(value: 'Sa'),
+                          ]
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      ElevatedButton(
+                        onPressed: () {
+                          if (_formKey.currentState!.saveAndValidate()) {
+                            _habitName = _formKey.currentState!.value['HabitName'];
+                            _habitDesc = _formKey.currentState!.value['HabitDesc'];
+                            _habitFreq = _formKey.currentState!.value['HabitFreq'];
+                            _panelController.close();
+                            _formKey.currentState?.reset();
+                          }
+                        },
+                        child: const Text('Submit'),
+                      ),
+                    ]
                   ),
-
-                ],
+                )
               ),
             ]
           ),
@@ -173,7 +227,7 @@ class _MyStatPageState extends State<StatPage> {
         ),
       ),
       floatingActionButton: AnimatedOpacity(
-        opacity: !_panelController.isPanelOpen ? 1 : 0,
+        opacity: (_panelController.isAttached && !_panelController.isPanelOpen) ? 1 : 0,
         duration: Durations.medium1,
         child: IgnorePointer(
           ignoring: _showStatState,
