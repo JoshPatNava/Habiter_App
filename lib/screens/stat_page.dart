@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:form_builder_validators/form_builder_validators.dart';
 
 class StatPage extends StatefulWidget {
   @override
@@ -9,10 +12,22 @@ class StatPage extends StatefulWidget {
 
 class _MyStatPageState extends State<StatPage> {
   bool _showStatState = false;
+  int _newFreq = 1;
 
   final PanelController _panelController = PanelController();
-  TextEditingController _habitName = TextEditingController();
-  TextEditingController _habitDesc = TextEditingController();
+  final GlobalKey<FormBuilderState> _formKey = GlobalKey<FormBuilderState>();
+  String? _habitName;
+  String? _habitDesc;
+  int? _habitFreq;
+  int? _weeklyFreq;
+  List<DropdownMenuItem<int>> get frequencies{
+    List<DropdownMenuItem<int>> freq = [
+      DropdownMenuItem(value: 1, child: Text("Daily")),
+      DropdownMenuItem(value: 2, child: Text("Weekly")),
+      DropdownMenuItem(value: 3, child: Text("Monthly")),
+    ];
+    return freq;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +36,7 @@ class _MyStatPageState extends State<StatPage> {
       body: SlidingUpPanel(
         controller: _panelController,
         minHeight: 0,
-        maxHeight: MediaQuery.of(context).size.height * 0.8,
+        maxHeight: MediaQuery.of(context).size.height*0.8,
         defaultPanelState: PanelState.CLOSED,
         backdropEnabled: true,
         backdropOpacity: 0.5,
@@ -35,7 +50,7 @@ class _MyStatPageState extends State<StatPage> {
                 child: IconButton(
                   padding: EdgeInsets.symmetric(vertical: 20),
                   onPressed: () {
-                    if (_panelController.isPanelOpen) {
+                    if(_panelController.isPanelOpen) {
                       _panelController.close();
                     }
                   },
@@ -47,45 +62,45 @@ class _MyStatPageState extends State<StatPage> {
                 scrollDirection: Axis.vertical,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(
-                      top: 40,
-                      left: 40,
-                      right: 40,
-                    ),
+                    padding: const EdgeInsets.only(top: 40, left: 40, right: 40),
                     child: TextField(
                       controller: _habitName,
                       decoration: InputDecoration(
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(width: 2.0),
+                          borderSide: BorderSide(
+                            width: 2.0,
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(width: 2.0),
+                          borderSide: BorderSide(
+                            width: 2.0,
+                          ),
                         ),
-                        hintText:
-                            "Your New Habit Name", // name: _habitName.text
+                        hintText: "Your New Habit Name", // name: _habitName.text
                       ),
                     ),
                   ),
 
                   Padding(
-                    padding: const EdgeInsets.only(
-                      top: 30,
-                      left: 40,
-                      right: 40,
-                    ),
+                    padding: const EdgeInsets.only(top: 30, left: 40, right: 40),
                     child: TextField(
                       controller: _habitDesc,
                       decoration: InputDecoration(
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(width: 2.0),
+                          borderSide: BorderSide(
+                            width: 2.0,
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(width: 2.0),
+                          borderSide: BorderSide(
+                            width: 2.0,
+                          ),
                         ),
                         hintText: "Description...", // name: _habitDesc.text
                       ),
                     ),
                   ),
+
                 ],
               ),
             ],
@@ -171,7 +186,7 @@ class _MyStatPageState extends State<StatPage> {
         ),
       ),
       floatingActionButton: AnimatedOpacity(
-        opacity: !_panelController.isPanelOpen ? 1 : 0,
+        opacity: (_panelController.isAttached && !_panelController.isPanelOpen) ? 1 : 0,
         duration: Durations.medium1,
         child: IgnorePointer(
           ignoring: _showStatState,
