@@ -4,7 +4,7 @@ import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 class StatPage extends StatefulWidget {
   @override
-  State<StatPage> createState() => _MyStatPageState();  
+  State<StatPage> createState() => _MyStatPageState();
 }
 
 class _MyStatPageState extends State<StatPage> {
@@ -21,7 +21,7 @@ class _MyStatPageState extends State<StatPage> {
       body: SlidingUpPanel(
         controller: _panelController,
         minHeight: 0,
-        maxHeight: MediaQuery.of(context).size.height*0.8,
+        maxHeight: MediaQuery.of(context).size.height * 0.8,
         defaultPanelState: PanelState.CLOSED,
         backdropEnabled: true,
         backdropOpacity: 0.5,
@@ -35,7 +35,7 @@ class _MyStatPageState extends State<StatPage> {
                 child: IconButton(
                   padding: EdgeInsets.symmetric(vertical: 20),
                   onPressed: () {
-                    if(_panelController.isPanelOpen) {
+                    if (_panelController.isPanelOpen) {
                       _panelController.close();
                     }
                   },
@@ -47,63 +47,67 @@ class _MyStatPageState extends State<StatPage> {
                 scrollDirection: Axis.vertical,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(top: 40, left: 40, right: 40),
+                    padding: const EdgeInsets.only(
+                      top: 40,
+                      left: 40,
+                      right: 40,
+                    ),
                     child: TextField(
                       controller: _habitName,
                       decoration: InputDecoration(
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            width: 2.0,
-                          ),
+                          borderSide: BorderSide(width: 2.0),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            width: 2.0,
-                          ),
+                          borderSide: BorderSide(width: 2.0),
                         ),
-                        hintText: "Your New Habit Name", // name: _habitName.text
+                        hintText:
+                            "Your New Habit Name", // name: _habitName.text
                       ),
                     ),
                   ),
 
                   Padding(
-                    padding: const EdgeInsets.only(top: 30, left: 40, right: 40),
+                    padding: const EdgeInsets.only(
+                      top: 30,
+                      left: 40,
+                      right: 40,
+                    ),
                     child: TextField(
                       controller: _habitDesc,
                       decoration: InputDecoration(
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            width: 2.0,
-                          ),
+                          borderSide: BorderSide(width: 2.0),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            width: 2.0,
-                          ),
+                          borderSide: BorderSide(width: 2.0),
                         ),
                         hintText: "Description...", // name: _habitDesc.text
                       ),
                     ),
                   ),
-
                 ],
               ),
-            ]
+            ],
           ),
         ),
         body: Center(
           child: Stack(
-            children: <Widget> [ 
+            children: <Widget>[
               IgnorePointer(
                 ignoring: _showStatState,
                 child: GridView.builder(
-                  padding: const EdgeInsets.only(top: 60, left: 20, right: 20, bottom: 100),
+                  padding: const EdgeInsets.only(
+                    top: 60,
+                    left: 20,
+                    right: 20,
+                    bottom: 100,
+                  ),
                   itemCount: 11,
-                  gridDelegate: 
-                    SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 25,
-                      mainAxisSpacing: 25,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 25,
+                    mainAxisSpacing: 25,
                   ),
                   itemBuilder: (context, index) => GestureDetector(
                     onTap: () {
@@ -118,10 +122,8 @@ class _MyStatPageState extends State<StatPage> {
                       ),
                       child: Center(
                         child: Text(
-                          "Habit ${index+1}",
-                          style: GoogleFonts.openSans(
-                            fontSize: 30,
-                          ),
+                          "Habit ${index + 1}",
+                          style: GoogleFonts.openSans(fontSize: 30),
                         ),
                       ),
                     ),
@@ -134,19 +136,17 @@ class _MyStatPageState extends State<StatPage> {
                 child: IgnorePointer(
                   ignoring: !_showStatState,
                   child: Stack(
-                    children: <Widget> [
+                    children: <Widget>[
                       Opacity(
                         opacity: 0.5,
-                        child: Container(
-                          color: Colors.black,
-                        ),
+                        child: Container(color: Colors.black),
                       ),
 
                       TapRegion(
-                        onTapOutside:(tap) {
+                        onTapOutside: (tap) {
                           setState(() {
-                              _showStatState = false; 
-                              });
+                            _showStatState = false;
+                          });
                         },
                         child: Center(
                           child: Container(
@@ -156,9 +156,7 @@ class _MyStatPageState extends State<StatPage> {
                             child: Center(
                               child: Text(
                                 "Habit Stats",
-                                style: GoogleFonts.openSans(
-                                  fontSize: 30,
-                                ),
+                                style: GoogleFonts.openSans(fontSize: 30),
                               ),
                             ),
                           ),
@@ -168,7 +166,7 @@ class _MyStatPageState extends State<StatPage> {
                   ),
                 ),
               ),
-            ]
+            ],
           ),
         ),
       ),
@@ -179,10 +177,10 @@ class _MyStatPageState extends State<StatPage> {
           ignoring: _showStatState,
           child: FloatingActionButton(
             onPressed: () {
-              if(!_panelController.isPanelOpen) {
+              if (!_panelController.isPanelOpen) {
                 _panelController.open();
               }
-            }, 
+            },
             child: Icon(Icons.add),
           ),
         ),

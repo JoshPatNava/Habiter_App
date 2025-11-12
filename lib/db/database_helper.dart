@@ -47,7 +47,7 @@ class DatabaseHelper {
     ''');
   }
 
-// Add habit
+  // Add habit
   Future<int> insertHabit(Habit habit) async {
     final db = await database;
     return await db.insert('habits', habit.toMap());
@@ -63,7 +63,7 @@ class DatabaseHelper {
   //update Habit
   Future<int> updateHabit(Habit habit) async {
     final db = await database;
-      return await db.update(
+    return await db.update(
       'habits',
       habit.toMap(),
       where: 'id = ?',
@@ -77,21 +77,25 @@ class DatabaseHelper {
     return await db.insert('habit_logs', log.toMap());
   }
 
-
   // Get logs for a habit
   Future<List<HabitLog>> getHabitLogs(int habitId) async {
     final db = await database;
-    final result = await db.query('habit_logs', where: 'habit_id = ?', whereArgs: [habitId]);
-    return result.map((map) => HabitLog.fromMap(map)).toList();  }
+    final result = await db.query(
+      'habit_logs',
+      where: 'habit_id = ?',
+      whereArgs: [habitId],
+    );
+    return result.map((map) => HabitLog.fromMap(map)).toList();
+  }
 
   // Update habit log (e.g., mark completed)
   Future<int> updateHabitLog(HabitLog log) async {
     final db = await database;
     return await db.update(
-    'habit_logs',
-    log.toMap(),
-    where: 'id = ?',
-    whereArgs: [log.id],
+      'habit_logs',
+      log.toMap(),
+      where: 'id = ?',
+      whereArgs: [log.id],
     );
   }
 

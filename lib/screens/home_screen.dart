@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/intl.dart';
+
 import '../controller/habit_controller.dart';
 import '../models/habit.dart';
 import '../models/habit_log.dart';
@@ -14,7 +16,7 @@ class _MyHomePageState extends State<MyHomePage> {
   //Controller OBJ
   final HabitController controller = HabitController();
 
-  DateTime today = DateTime.now();
+  DateTime _today = DateTime.now();
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   bool _showInfoState = false;
@@ -26,17 +28,18 @@ class _MyHomePageState extends State<MyHomePage> {
   Map<int, int> _completionCountByHabit = {};
   Map<DateTime, List<HabitLog>> _logsByDay = {};
   List<HabitLog> _selectedDayLogs = [];
+  bool _completedOnly = true;
 
 
   @override
   void initState() {
     super.initState();
-    loadAll();
+    _loadAll();
   }
 
-  DateTime dateOnly(DateTime dt) => DateTime(dt.year, dt.month, dt.day);
+  DateTime _dateOnly(DateTime dt) => DateTime(dt.year, dt.month, dt.day);
 
-  Future<void> loadAll() async {
+  Future<void> _loadAll() async {
     try {
       final habits = await controller.getAllHabits();
       final habitById = <int, Habit>{};
@@ -52,7 +55,7 @@ class _MyHomePageState extends State<MyHomePage> {
         completionCountByHabit[habit.id!] = logs.length;
 
         for (final log in logs) {
-          final logDate = dateOnly(log.date);
+          final logDate = _dateOnly(log.date);
           logsByDay.putIfAbsent(logDate, () => []).add(log);
         }
       }
@@ -66,14 +69,19 @@ class _MyHomePageState extends State<MyHomePage> {
       });
     } catch(e) {
       setState(() => _loading = false);
+       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load data: $e')),
+        );
+      }
     }
   }
 
 List<HabitLog> _getEventsForDay(DateTime day) {
-    return _logsByDay[_dateOnly(day)] ?? const [];
+    return _logsByDay[_dateOnly(day)] ?? const <HabitLog>[];
   }
 
-  void _handleDaySelect(DateTime selectedDay, DateTime focusedDay) {
+  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
     final logs = _getEventsForDay(selectedDay);
     setState(() {
       _selectedDay = selectedDay;
@@ -82,13 +90,15 @@ List<HabitLog> _getEventsForDay(DateTime day) {
       _showInfoState = true;
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
 
     return Scaffold(
       backgroundColor: Color(0xff7886c7),
-      body: Center(
+      body: _loading
+      ? const Center(child: CircularProgressIndicator())
+      : Center(
         child: Stack(
           children: <Widget> [
             IgnorePointer(
@@ -96,7 +106,8 @@ List<HabitLog> _getEventsForDay(DateTime day) {
               child: ListView.builder(
                 scrollDirection: Axis.vertical,
                 shrinkWrap: true,
-                itemCount: 11,
+                padding: EdgeInsets.zero, // added
+                itemCount: 1 + _habits.length, //changed
                 itemBuilder:(context, index) {
                   if (index == 0) {
                     return Padding(
@@ -106,33 +117,58 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(25),
                         ),
-                        child: TableCalendar(
-                          locale: "en_US",
-                          headerStyle: HeaderStyle(
-                            titleCentered: true,
-                            formatButtonVisible: false,
-                            headerMargin: EdgeInsets.only(bottom: 10),
-                            decoration: BoxDecoration(
-                              color: Colors.redAccent,
-                              borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+                        child: TableCalendar<HabitLog>(
+                                locale: "en_US",
+                                headerStyle: HeaderStyle(
+                                  titleCentered: true,
+                                  formatButtonVisible: false,
+                                  headerMargin:
+                                      const EdgeInsets.only(bottom: 10),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.redAccent,
+                                    borderRadius: BorderRadius.vertical(
+                                        top: Radius.circular(25)),
+                                  ),
+                                  titleTextStyle: GoogleFonts.openSans(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                calendarStyle: CalendarStyle(
+                                  markerDecoration: const BoxDecoration(
+                                    color: Colors.redAccent,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  markersAlignment: Alignment.bottomCenter,
+                                  markersMaxCount: 3,
+                                  todayDecoration: BoxDecoration(
+                                    color: Colors.redAccent.withOpacity(0.15),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  selectedDecoration: const BoxDecoration(
+                                    color: Colors.redAccent,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                // Calendar range (wider + dynamic)
+                                firstDay: DateTime.utc(_today.year - 1, 1, 1),
+                                lastDay: DateTime.utc(_today.year + 1, 12, 31),
+                                focusedDay: _focusedDay,
+                                selectedDayPredicate: (day) =>
+                                    isSameDay(_selectedDay, day),
+                                // Hook in events -> marker dots
+                                eventLoader: _getEventsForDay,
+                                onDaySelected: _onDaySelected,
+                              ),
                             )
-                          ),
-                          // Calender 
-                          focusedDay: _focusedDay, 
-                          firstDay: DateTime.utc(2025, 10, 1), 
-                          lastDay: DateTime.utc(today.year + 1, today.month + 1, 1).subtract(const Duration(days: 1)),
-                          selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                          onDaySelected: (selectedDay, focusedDay) {
-                            setState(() {
-                              _selectedDay = selectedDay;
-                              _focusedDay = focusedDay;
-                              _showInfoState = true;
-                            });
-                          },
-                        ),
-                      ),
-                    );
-                  }
+                          );  
+                        }
+                  final habit = _habits[index - 1];
+                  final completed = (habit.id != null)
+                      ? (_completionCountByHabit[habit.id!] ?? 0)
+                      : 0;
+
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 30),
                     child: Container(
@@ -144,9 +180,10 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                       ),
                       child: Center(
                         child: Text(
-                          "Habit $index Basic Info/Stats\n...\n...",
+                          "${habit.name}\nTotal logs: $completed",
+                          textAlign: TextAlign.center,
                           style: GoogleFonts.openSans(
-                            fontSize: 30,
+                            fontSize: 24,
                           ),
                         ),
                       ),
@@ -171,26 +208,23 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                     ),
 
                     TapRegion(
-                      onTapOutside:(tap) {
+                      onTapOutside:(_) {
                         setState(() {
                             _showInfoState = false; 
-                            _selectedDay = today;
-                            _focusedDay = today;
+                            _selectedDay = null;
+                            _focusedDay = _today;
                             });
                       },
                       child: Center(
                         child: Container(
                           height: 450,
-                          width: 300,
-                          color: Colors.white,
-                          child: Center(
-                            child: Text(
-                              "Habit Data",
-                              style: GoogleFonts.openSans(
-                                fontSize: 30,
-                              ),
-                            ),
+                          width: 320,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
                           ),
+                          padding: const EdgeInsets.all(16),
+                          child: _buildSelectedDayPanel(),
                         ),
                       ),
                     ),
@@ -201,6 +235,101 @@ List<HabitLog> _getEventsForDay(DateTime day) {
           ]
         ),
       ),
+      
     );
   }
+    Widget _buildSelectedDayPanel() {
+    final sel = _selectedDay != null ? _dateOnly(_selectedDay!) : null;
+    final friendlyDate = sel != null
+        ? "${sel.year}-${sel.month.toString().padLeft(2, '0')}-${sel.day.toString().padLeft(2, '0')}"
+        : "";
+    final timeFormatter = DateFormat('h:mm a');
+
+    final filtered = _completedOnly
+      ? _selectedDayLogs.where((l) => l.completed).toList()
+      : List<HabitLog>.from(_selectedDayLogs);
+
+    filtered.sort((a, b) => b.date.compareTo(a.date));
+
+     return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      // Title + toggle
+      Row(
+        children: [
+          Expanded(
+            child: Text(
+              "Habit Data — $friendlyDate",
+              style: GoogleFonts.openSans(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+          ),
+          Row(
+            children: [
+              Text(
+                _completedOnly ? "Completed" : "All",
+                style: GoogleFonts.openSans(fontSize: 12),
+              ),
+              const SizedBox(width: 6),
+              Switch(
+                value: _completedOnly,
+                onChanged: (v) => setState(() => _completedOnly = v),
+              ),
+            ],
+          ),
+        ],
+      ),
+      const SizedBox(height: 12),
+
+      // List
+      Expanded(
+        child: filtered.isEmpty
+            ? Center(
+                child: Text(
+                  _completedOnly ? "No completed logs for this day" : "No logs for this day",
+                  style: GoogleFonts.openSans(fontSize: 15),
+                ),
+              )
+            : ListView.separated(
+                itemCount: filtered.length,
+                separatorBuilder: (_, __) => const Divider(height: 16),
+                itemBuilder: (context, i) {
+                  final log = filtered[i];
+                  final habit = _habitById[log.habitId];
+                  final name = habit?.name ?? "Habit ${log.habitId}";
+                  final time = timeFormatter.format(log.date);
+
+                  return ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(
+                      log.completed ? Icons.check_circle : Icons.radio_button_unchecked,
+                      color: log.completed ? Colors.green : Colors.grey,
+                    ),
+                    title: Text(
+                      name,
+                      style: GoogleFonts.openSans(fontSize: 15, fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      "Logged at $time",
+                      style: GoogleFonts.openSans(fontSize: 13),
+                    ),
+                  );
+                },
+              ),
+      ),
+
+      Align(
+        alignment: Alignment.centerRight,
+        child: TextButton(
+          onPressed: () {
+            setState(() {
+              _showInfoState = false;
+              _selectedDay = null;
+            });
+          },
+          child: const Text("Close"),
+        ),
+      ),
+    ],
+  );
 }

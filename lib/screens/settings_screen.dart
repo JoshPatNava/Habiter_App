@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 class SettingsPage extends StatefulWidget {
   @override
-  State<SettingsPage> createState() => _MySettingsPageState();  
+  State<SettingsPage> createState() => _MySettingsPageState();
 }
 
 class _MySettingsPageState extends State<SettingsPage> {
@@ -15,15 +15,14 @@ class _MySettingsPageState extends State<SettingsPage> {
       backgroundColor: Color(0xff7886c7),
       body: Center(
         child: Stack(
-          children: <Widget> [ 
+          children: <Widget>[
             IgnorePointer(
               ignoring: _showSettingsState,
               child: Padding(
                 padding: const EdgeInsets.only(top: 40, left: 20, right: 20),
-                
               ),
             ),
-          ]
+          ],
         ),
       ),
     );

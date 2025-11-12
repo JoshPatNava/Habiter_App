@@ -1,9 +1,8 @@
-
 class HabitLog {
   int? id;
-  int habitId;             // foreign key to Habit
-  DateTime date;           // the date this log refers to
-  bool completed;          // whether the habit was completed on this date
+  int habitId; // foreign key to Habit
+  DateTime date; // the date this log refers to
+  bool completed; // whether the habit was completed on this date
 
   HabitLog({
     this.id,
@@ -13,16 +12,17 @@ class HabitLog {
   });
 
   // Convert HabitLog to Map (database)
-Map<String, dynamic> toMap() {
+  Map<String, dynamic> toMap() {
     return {
       'id': id,
       'habitId': habitId,
       'date': date.toIso8601String(),
       'completed': completed ? 1 : 0,
-    }; 
+    };
   }
+
   // Create HabitLog from Map (database)
-   factory HabitLog.fromMap(Map<String, dynamic> map) {
+  factory HabitLog.fromMap(Map<String, dynamic> map) {
     return HabitLog(
       id: map['id'],
       habitId: map['habit_id'],
