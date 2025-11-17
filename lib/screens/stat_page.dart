@@ -7,7 +7,7 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 
 class StatPage extends StatefulWidget {
   @override
-  State<StatPage> createState() => _MyStatPageState();
+  State<StatPage> createState() => _MyStatPageState();  
 }
 
 class _MyStatPageState extends State<StatPage> {
@@ -37,6 +37,7 @@ class _MyStatPageState extends State<StatPage> {
         controller: _panelController,
         minHeight: 0,
         maxHeight: MediaQuery.of(context).size.height*0.8,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(50)),
         defaultPanelState: PanelState.CLOSED,
         backdropEnabled: true,
         backdropOpacity: 0.5,
@@ -44,85 +45,119 @@ class _MyStatPageState extends State<StatPage> {
         panel: Center(
           child: Stack(
             children: [
-              Positioned(
-                top: 20,
-                right: 20,
-                child: IconButton(
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  onPressed: () {
-                    if(_panelController.isPanelOpen) {
-                      _panelController.close();
-                    }
-                  },
-                  icon: const Icon(Icons.close),
-                ),
-              ),
-
-              ListView(
-                scrollDirection: Axis.vertical,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 40, left: 40, right: 40),
-                    child: TextField(
-                      controller: _habitName,
-                      decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            width: 2.0,
+              FormBuilder(
+                key: _formKey,
+                skipDisabled: true,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 80, left: 40, right: 40),
+                  child: Column(
+                    children: [
+                      FormBuilderTextField(
+                        name: 'HabitName',
+                        maxLength: 30,
+                        maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                        onTapOutside: (event) {
+                          FocusManager.instance.primaryFocus?.unfocus();
+                        },
+                        decoration: InputDecoration(
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              width: 2.0,
+                            ),
                           ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            width: 2.0,
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              width: 2.0,
+                            ),
                           ),
+                          hintText: "Your Habit Name", // name: _habitName.text
                         ),
-                        hintText: "Your New Habit Name", // name: _habitName.text
+                        validator: FormBuilderValidators.compose([
+                          FormBuilderValidators.required(),
+                        ]),
                       ),
-                    ),
-                  ),
-
-                  Padding(
-                    padding: const EdgeInsets.only(top: 30, left: 40, right: 40),
-                    child: TextField(
-                      controller: _habitDesc,
-                      decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            width: 2.0,
+                      const SizedBox(height: 30),
+                      FormBuilderTextField(
+                        name: 'HabitDesc',
+                        maxLength: 100,
+                        maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                        onTapOutside: (event) {
+                          FocusManager.instance.primaryFocus?.unfocus();
+                        },
+                        decoration: InputDecoration(
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              width: 2.0,
+                            ),
                           ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            width: 2.0,
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              width: 2.0,
+                            ),
                           ),
+                          hintText: "Description...", // name: _habitDesc.text
                         ),
-                        hintText: "Description...", // name: _habitDesc.text
                       ),
-                    ),
+                      const SizedBox(height: 30),
+                      FormBuilderDropdown<int>(
+                        name: 'HabitFreq',
+                        items: frequencies,
+                        initialValue: 1,
+                        onChanged: (value) {
+                          setState(() {
+                            _newFreq = value ?? 1;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 30),
+                      Visibility(
+                        visible: _newFreq == 2,
+                        child: FormBuilderCheckboxGroup(
+                          name: 'Weekdays',
+                          options: const [
+                            FormBuilderFieldOption(value: 'Su'),
+                            FormBuilderFieldOption(value: 'M'),
+                            FormBuilderFieldOption(value: 'Tu'),
+                            FormBuilderFieldOption(value: 'W'),
+                            FormBuilderFieldOption(value: 'Th'),
+                            FormBuilderFieldOption(value: 'F'),
+                            FormBuilderFieldOption(value: 'Sa'),
+                          ]
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      ElevatedButton(
+                        onPressed: () {
+                          if (_formKey.currentState!.saveAndValidate()) {
+                            _habitName = _formKey.currentState!.value['HabitName'];
+                            _habitDesc = _formKey.currentState!.value['HabitDesc'];
+                            _habitFreq = _formKey.currentState!.value['HabitFreq'];
+                            _panelController.close();
+                            _formKey.currentState?.reset();
+                          }
+                        },
+                        child: const Text('Submit'),
+                      ),
+                    ]
                   ),
-
-                ],
+                )
               ),
-            ],
+            ]
           ),
         ),
         body: Center(
           child: Stack(
-            children: <Widget>[
+            children: <Widget> [ 
               IgnorePointer(
                 ignoring: _showStatState,
                 child: GridView.builder(
-                  padding: const EdgeInsets.only(
-                    top: 60,
-                    left: 20,
-                    right: 20,
-                    bottom: 100,
-                  ),
+                  padding: const EdgeInsets.only(top: 60, left: 20, right: 20, bottom: 100),
                   itemCount: 11,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 25,
-                    mainAxisSpacing: 25,
+                  gridDelegate: 
+                    SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 25,
+                      mainAxisSpacing: 25,
                   ),
                   itemBuilder: (context, index) => GestureDetector(
                     onTap: () {
@@ -137,8 +172,10 @@ class _MyStatPageState extends State<StatPage> {
                       ),
                       child: Center(
                         child: Text(
-                          "Habit ${index + 1}",
-                          style: GoogleFonts.openSans(fontSize: 30),
+                          "Habit ${index+1}",
+                          style: GoogleFonts.openSans(
+                            fontSize: 30,
+                          ),
                         ),
                       ),
                     ),
@@ -151,17 +188,19 @@ class _MyStatPageState extends State<StatPage> {
                 child: IgnorePointer(
                   ignoring: !_showStatState,
                   child: Stack(
-                    children: <Widget>[
+                    children: <Widget> [
                       Opacity(
                         opacity: 0.5,
-                        child: Container(color: Colors.black),
+                        child: Container(
+                          color: Colors.black,
+                        ),
                       ),
 
                       TapRegion(
-                        onTapOutside: (tap) {
+                        onTapOutside:(tap) {
                           setState(() {
-                            _showStatState = false;
-                          });
+                              _showStatState = false; 
+                              });
                         },
                         child: Center(
                           child: Container(
@@ -171,7 +210,9 @@ class _MyStatPageState extends State<StatPage> {
                             child: Center(
                               child: Text(
                                 "Habit Stats",
-                                style: GoogleFonts.openSans(fontSize: 30),
+                                style: GoogleFonts.openSans(
+                                  fontSize: 30,
+                                ),
                               ),
                             ),
                           ),
@@ -181,7 +222,7 @@ class _MyStatPageState extends State<StatPage> {
                   ),
                 ),
               ),
-            ],
+            ]
           ),
         ),
       ),
@@ -192,10 +233,10 @@ class _MyStatPageState extends State<StatPage> {
           ignoring: _showStatState,
           child: FloatingActionButton(
             onPressed: () {
-              if (!_panelController.isPanelOpen) {
+              if(!_panelController.isPanelOpen) {
                 _panelController.open();
               }
-            },
+            }, 
             child: Icon(Icons.add),
           ),
         ),
