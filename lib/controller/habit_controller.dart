@@ -26,7 +26,7 @@ class HabitController {
 
   // Add habit log
   Future<int> addHabitLog(HabitLog log) async {
-    return await _dbHelper.insertHabitLog(log);
+    return await _dbHelper.upsertHabitLog(log);
   }
 
   // get logs for specfied habit

@@ -2,7 +2,7 @@ class Habit {
   final int? id;
   final String name;
   final String? description;
-  final int frequency; // 1 = daily, 2 = weekly, 3 = monthly
+  final int frequency; 
   final DateTime startDate;
   final int? goalCount;
 
