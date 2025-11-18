@@ -7,6 +7,7 @@ import 'screens/settings_screen.dart';
 import 'db/database_helper.dart';
 
 void main() {
+  
   runApp(MyApp());
 }
 
@@ -15,7 +16,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false, home: MainScreen());
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: MainScreen(),
+    );
   }
 }
 
@@ -35,12 +39,19 @@ class _MainScreenState extends State<MainScreen> {
 
   int _selectedIndex = 1;
 
-  final List<Widget> _screens = [StatPage(), MyHomePage(), SettingsPage()];
+  final List<Widget> _screens = [
+    StatPage(),
+    MyHomePage(),
+    SettingsPage(),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: _screens),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _screens,
+      ),
       bottomNavigationBar: BottomAppBar(
         color: Color(0xffffdada),
         shape: const CircularNotchedRectangle(),
@@ -58,9 +69,7 @@ class _MainScreenState extends State<MainScreen> {
                 padding: EdgeInsets.all(0),
                 icon: const Icon(Icons.list_alt_outlined),
                 onPressed: () {
-                  setState(() {
-                    _selectedIndex = 0;
-                  });
+                  setState(() {_selectedIndex = 0;});
                 },
               ),
               IconButton(
@@ -69,9 +78,7 @@ class _MainScreenState extends State<MainScreen> {
                 padding: EdgeInsets.all(0),
                 icon: const Icon(Icons.home),
                 onPressed: () {
-                  setState(() {
-                    _selectedIndex = 1;
-                  });
+                  setState(() {_selectedIndex = 1;});
                 },
               ),
               IconButton(
@@ -80,15 +87,15 @@ class _MainScreenState extends State<MainScreen> {
                 padding: EdgeInsets.all(0),
                 icon: const Icon(Icons.settings),
                 onPressed: () {
-                  setState(() {
-                    _selectedIndex = 2;
-                  });
+                  setState(() {_selectedIndex = 2;});
                 },
-              ),
+              )
             ],
           ),
         ),
       ),
     );
   }
+
+
 }

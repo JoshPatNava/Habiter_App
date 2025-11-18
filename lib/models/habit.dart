@@ -2,7 +2,7 @@ class Habit {
   final int? id;
   final String name;
   final String? description;
-  final int frequency;
+  final int frequency; // 1 = daily, 2 = weekly, 3 = monthly
   final DateTime startDate;
   final int? goalCount;
 
@@ -15,10 +15,10 @@ class Habit {
     this.goalCount,
   });
 
-  // Convert Habit Obj to Map (database insertion/update)
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
+// Convert Habit Obj to Map (database insertion/update)
+Map<String, dynamic> toMap() {
+  return {
+    'id': id,
       'name': name,
       'description': description,
       'frequency': frequency,
@@ -27,8 +27,8 @@ class Habit {
     };
   }
 
-  // Create Habit Obj from Map (database retrieval)
-  factory Habit.fromMap(Map<String, dynamic> map) {
+// Create Habit Obj from Map (database retrieval)
+factory Habit.fromMap(Map<String, dynamic> map) {
     return Habit(
       id: map['id'] as int?,
       name: map['name'] as String,
@@ -36,8 +36,8 @@ class Habit {
       frequency: map['frequency'] as int,
       startDate: DateTime.parse(map['start_date'] as String),
       goalCount: map['goal_count'] == null
-          ? null
-          : (map['goal_count'] as num).toInt(),
+        ? null
+        : (map['goal_count'] as num).toInt(),
     );
   }
 }

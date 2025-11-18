@@ -56,7 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
         for (final log in logs) {
           final logDate = _dateOnly(log.date);
-          logsByDay.putIfAbsent(logDate, () => []).add(log);
+          logsByDay.putIfAbsent(logDate, () => <HabitLog>[]).add(log);
         }
       }
 
@@ -157,13 +157,13 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                                 focusedDay: _focusedDay,
                                 selectedDayPredicate: (day) =>
                                     isSameDay(_selectedDay, day),
-                                // Hook in events -> marker dots
                                 eventLoader: _getEventsForDay,
                                 onDaySelected: _onDaySelected,
                               ),
                             )
                           );  
                         }
+                        
                   final habit = _habits[index - 1];
                   final completed = (habit.id != null)
                       ? (_completionCountByHabit[habit.id!] ?? 0)
@@ -332,4 +332,5 @@ List<HabitLog> _getEventsForDay(DateTime day) {
       ),
     ],
   );
+  }
 }
