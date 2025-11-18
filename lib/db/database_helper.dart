@@ -21,10 +21,15 @@ class DatabaseHelper {
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
-    return await openDatabase(path, version: 1, onCreate: _createDB);
+    return openDatabase(path, 
+                        version: 1,
+                        onConfigure: (db) async {
+                          await db.execute('PRAGMA foreign_keys = ON');
+                        }, 
+                        onCreate: _createDB);
   }
 
-  Future _createDB(Database db, int version) async {
+  Future<void> _createDB(Database db, int version) async {
     await db.execute(''' 
     CREATE TABLE habits(
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,7 +47,8 @@ class DatabaseHelper {
         habit_id INTEGER NOT NULL,
         date TEXT NOT NULL,
         completed INTEGER NOT NULL DEFAULT 0,
-        FOREIGN KEY (habit_id) REFERENCES habits(id)
+        FOREIGN KEY (habit_id) REFERENCES habits(id) ON DELETE CASCADE,
+        UNIQUE (habit_id, date)
       )
     ''');
   }
@@ -50,14 +56,14 @@ class DatabaseHelper {
   // Add habit
   Future<int> insertHabit(Habit habit) async {
     final db = await database;
-    return await db.insert('habits', habit.toMap());
+    return await db.insert('habits', habit.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   // Get all habits
   Future<List<Habit>> getHabits() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('habits');
-    return List.generate(maps.length, (i) => Habit.fromMap(maps[i]));
+    final rows = await db.query('habits', orderBy: 'id DESC');
+    return rows.map((map) => Habit.fromMap(map)).toList();
   }
 
   //update Habit
@@ -68,36 +74,54 @@ class DatabaseHelper {
       habit.toMap(),
       where: 'id = ?',
       whereArgs: [habit.id],
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
-  // Add habit log
-  Future<int> insertHabitLog(HabitLog log) async {
+  // Add habit log & update if exists
+  Future<int> upsertHabitLog(HabitLog log) async {
     final db = await database;
-    return await db.insert('habit_logs', log.toMap());
+    final day = DateTime(log.date.year, log.date.month, log.date.day).toIso8601String().substring(0,10);
+    final map = log.toMap()..['date'] = day;
+    final updated = await db.update(
+      'habit_logs',
+      map,
+      where: 'habit_id = ? AND date = ?',
+      whereArgs: [log.habitId, day],
+    );
+
+    if(updated == 0) {
+      return db.insert('habit_logs', map, conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+    return updated;
   }
 
   // Get logs for a habit
-  Future<List<HabitLog>> getHabitLogs(int habitId) async {
+  Future<List<HabitLog>> getHabitLogs(int habitId, {DateTime? forDay}) async {
     final db = await database;
-    final result = await db.query(
+
+    if (forDay != null) {
+      final day = DateTime(forDay.year, forDay.month, forDay.day)
+          .toIso8601String()
+          .substring(0, 10);
+      final rows = await db.query(
+        'habit_logs',
+        where: 'habit_id = ? AND date = ?',
+        whereArgs: [habitId, day],
+        orderBy: 'date DESC',
+      );
+      return rows.map((m) => HabitLog.fromMap(m)).toList();
+    }
+
+    final rows = await db.query(
       'habit_logs',
       where: 'habit_id = ?',
       whereArgs: [habitId],
+      orderBy: 'date DESC',
     );
-    return result.map((map) => HabitLog.fromMap(map)).toList();
-  }
+    return rows.map((m) => HabitLog.fromMap(m)).toList();
+}
 
-  // Update habit log (e.g., mark completed)
-  Future<int> updateHabitLog(HabitLog log) async {
-    final db = await database;
-    return await db.update(
-      'habit_logs',
-      log.toMap(),
-      where: 'id = ?',
-      whereArgs: [log.id],
-    );
-  }
 
   // Delete habit
   Future<int> deleteHabit(int id) async {

@@ -13,21 +13,20 @@ class HabitLog {
 
   // Convert HabitLog to Map (database)
   Map<String, dynamic> toMap() {
+    final d = DateTime(date.year, date.month, date.day).toIso8601String().substring(0,10);
     return {
       'id': id,
       'habitId': habitId,
-      'date': date.toIso8601String(),
+      'date': d,
       'completed': completed ? 1 : 0,
     };
   }
 
   // Create HabitLog from Map (database)
-  factory HabitLog.fromMap(Map<String, dynamic> map) {
-    return HabitLog(
+  factory HabitLog.fromMap(Map<String, dynamic> map) => HabitLog(
       id: map['id'],
       habitId: map['habit_id'],
       date: DateTime.parse(map['date']),
       completed: map['completed'] == 1,
-    );
-  }
+  );
 }
