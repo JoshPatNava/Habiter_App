@@ -12,19 +12,20 @@ class StatPage extends StatefulWidget {
 
 class _MyStatPageState extends State<StatPage> {
   bool _showStatState = false;
-  int _newFreq = 1;
+  bool _weekdaysVisible = false;
+  bool _panelOpen = false;
+  double _panelPosition = 0;
 
   final PanelController _panelController = PanelController();
   final GlobalKey<FormBuilderState> _formKey = GlobalKey<FormBuilderState>();
   String? _habitName;
   String? _habitDesc;
   int? _habitFreq;
-  int? _weeklyFreq;
+  List<int>? _weeklyFreq;
   List<DropdownMenuItem<int>> get frequencies{
     List<DropdownMenuItem<int>> freq = [
       DropdownMenuItem(value: 1, child: Text("Daily")),
       DropdownMenuItem(value: 2, child: Text("Weekly")),
-      DropdownMenuItem(value: 3, child: Text("Monthly")),
     ];
     return freq;
   }
@@ -38,10 +39,18 @@ class _MyStatPageState extends State<StatPage> {
         minHeight: 0,
         maxHeight: MediaQuery.of(context).size.height*0.8,
         borderRadius: BorderRadius.vertical(top: Radius.circular(50)),
+        color: Color(0xfffff2f2),
         defaultPanelState: PanelState.CLOSED,
         backdropEnabled: true,
         backdropOpacity: 0.5,
         isDraggable: false,
+        onPanelClosed: () {
+            setState(() {
+              _panelOpen = false;
+            });
+        },
+        
+
         panel: Center(
           child: Stack(
             children: [
@@ -105,23 +114,23 @@ class _MyStatPageState extends State<StatPage> {
                         initialValue: 1,
                         onChanged: (value) {
                           setState(() {
-                            _newFreq = value ?? 1;
+                            _weekdaysVisible = (value == 2);
                           });
                         },
                       ),
                       const SizedBox(height: 30),
                       Visibility(
-                        visible: _newFreq == 2,
+                        visible: _weekdaysVisible,
                         child: FormBuilderCheckboxGroup(
-                          name: 'Weekdays',
+                          name: 'WeeklyFreq',
                           options: const [
-                            FormBuilderFieldOption(value: 'Su'),
-                            FormBuilderFieldOption(value: 'M'),
-                            FormBuilderFieldOption(value: 'Tu'),
-                            FormBuilderFieldOption(value: 'W'),
-                            FormBuilderFieldOption(value: 'Th'),
-                            FormBuilderFieldOption(value: 'F'),
-                            FormBuilderFieldOption(value: 'Sa'),
+                            FormBuilderFieldOption(value: 1, child: Text('Su')),
+                            FormBuilderFieldOption(value: 2, child: Text('M')),
+                            FormBuilderFieldOption(value: 3, child: Text('Tu')),
+                            FormBuilderFieldOption(value: 4, child: Text('W')),
+                            FormBuilderFieldOption(value: 5, child: Text('Th')),
+                            FormBuilderFieldOption(value: 6, child: Text('F')),
+                            FormBuilderFieldOption(value: 7, child: Text('Sa')),
                           ]
                         ),
                       ),
@@ -132,6 +141,10 @@ class _MyStatPageState extends State<StatPage> {
                             _habitName = _formKey.currentState!.value['HabitName'];
                             _habitDesc = _formKey.currentState!.value['HabitDesc'];
                             _habitFreq = _formKey.currentState!.value['HabitFreq'];
+                            if(_weekdaysVisible) {
+                              _weeklyFreq = _formKey.currentState!.value['WeeklyFreq'] as List<int>?;
+                            }
+                            
                             _panelController.close();
                             _formKey.currentState?.reset();
                           }
@@ -182,13 +195,13 @@ class _MyStatPageState extends State<StatPage> {
                   ),
                 ),
               ),
-              AnimatedOpacity(
-                opacity: _showStatState ? 1 : 0,
-                duration: Durations.medium1,
-                child: IgnorePointer(
-                  ignoring: !_showStatState,
+              IgnorePointer(
+                ignoring: !_showStatState,
+                child: AnimatedOpacity(
+                  opacity: !_showStatState ? 0 : 1,
+                  duration: Durations.medium1,
                   child: Stack(
-                    children: <Widget> [
+                    children: [
                       Opacity(
                         opacity: 0.5,
                         child: Container(
@@ -199,8 +212,8 @@ class _MyStatPageState extends State<StatPage> {
                       TapRegion(
                         onTapOutside:(tap) {
                           setState(() {
-                              _showStatState = false; 
-                              });
+                            _showStatState = false; 
+                          });
                         },
                         child: Center(
                           child: Container(
@@ -226,18 +239,27 @@ class _MyStatPageState extends State<StatPage> {
           ),
         ),
       ),
-      floatingActionButton: AnimatedOpacity(
-        opacity: (_panelController.isAttached && !_panelController.isPanelOpen) ? 1 : 0,
-        duration: Durations.medium1,
-        child: IgnorePointer(
-          ignoring: _showStatState,
-          child: FloatingActionButton(
-            onPressed: () {
-              if(!_panelController.isPanelOpen) {
-                _panelController.open();
-              }
-            }, 
-            child: Icon(Icons.add),
+      floatingActionButton: IgnorePointer(
+        ignoring: _panelOpen || _showStatState,
+        // child: AnimatedOpacity(
+        //   opacity: (!_showStatState && !_panelOpen) ? 1 : 0,
+          // opacity: _panelPosition,
+          // duration: Durations.medium1,
+        child: Visibility(
+          visible: !_showStatState && !_panelOpen,
+          child: IgnorePointer(
+            ignoring: _showStatState,
+            child: FloatingActionButton(
+              onPressed: () {
+                if(!_panelController.isPanelOpen) {
+                  setState(() {
+                    _panelOpen = true;
+                  });
+                  _panelController.open();
+                }
+              }, 
+              child: Icon(Icons.add),
+            ),
           ),
         ),
       ),
