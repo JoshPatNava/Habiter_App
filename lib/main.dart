@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:namer_app/screens/stat_page.dart';
 import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
-import 'db/database_helper.dart';
 
 void main() {
   

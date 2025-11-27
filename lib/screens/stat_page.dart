@@ -5,6 +5,9 @@ import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 
+import '../controller/habit_controller.dart';
+import '../models/habit.dart';
+
 class StatPage extends StatefulWidget {
   @override
   State<StatPage> createState() => _MyStatPageState();  
@@ -18,6 +21,9 @@ class _MyStatPageState extends State<StatPage> {
 
   final PanelController _panelController = PanelController();
   final GlobalKey<FormBuilderState> _formKey = GlobalKey<FormBuilderState>();
+
+  final HabitController _habitController = HabitController();
+
   String? _habitName;
   String? _habitDesc;
   int? _habitFreq;
@@ -28,6 +34,23 @@ class _MyStatPageState extends State<StatPage> {
       DropdownMenuItem(value: 2, child: Text("Weekly")),
     ];
     return freq;
+  }
+
+  List<Habit> _habits = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHabits();
+  }
+
+  Future<void> _loadHabits() async {
+    final habits = await _habitController.getAllHabits();
+    setState(() {
+      _habits = habits;
+      _loading = false;
+    });
   }
 
   @override
@@ -136,7 +159,7 @@ class _MyStatPageState extends State<StatPage> {
                       ),
                       const SizedBox(height: 30),
                       ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async{
                           if (_formKey.currentState!.saveAndValidate()) {
                             _habitName = _formKey.currentState!.value['HabitName'];
                             _habitDesc = _formKey.currentState!.value['HabitDesc'];
@@ -145,6 +168,34 @@ class _MyStatPageState extends State<StatPage> {
                               _weeklyFreq = _formKey.currentState!.value['WeeklyFreq'] as List<int>?;
                             }
                             
+                            final newHabit = Habit(
+                              name: _habitName!,
+                              description: _habitDesc,
+                              frequency: _habitFreq!,
+                              startDate: DateTime.now(),
+                              goalCount: _weekdaysVisible ? _weeklyFreq?.length : null,
+                            );
+                            
+                            final messenger = ScaffoldMessenger.of(context);
+
+                            try{
+                              await _habitController.addHabit(newHabit);
+                              await _loadHabits();
+
+                              if (!mounted) return;
+
+                              messenger.showSnackBar(
+                                const SnackBar(content: Text('Habit Added Successfully!')),
+                              );
+                            } catch (e) {
+
+                              if (!mounted) return;
+
+                              messenger.showSnackBar(
+                                SnackBar(content: Text('Failed to add habit: $e'))
+                              );
+                            }
+
                             _panelController.close();
                             _formKey.currentState?.reset();
                           }
@@ -159,13 +210,14 @@ class _MyStatPageState extends State<StatPage> {
           ),
         ),
         body: Center(
-          child: Stack(
+          child: _loading ? const CircularProgressIndicator() 
+          : Stack(
             children: <Widget> [ 
               IgnorePointer(
                 ignoring: _showStatState,
                 child: GridView.builder(
                   padding: const EdgeInsets.only(top: 60, left: 20, right: 20, bottom: 100),
-                  itemCount: 11,
+                  itemCount: _habits.length,
                   gridDelegate: 
                     SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
@@ -185,7 +237,7 @@ class _MyStatPageState extends State<StatPage> {
                       ),
                       child: Center(
                         child: Text(
-                          "Habit ${index+1}",
+                          _habits[index].name,
                           style: GoogleFonts.openSans(
                             fontSize: 30,
                           ),
