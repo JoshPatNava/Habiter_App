@@ -91,26 +91,95 @@ List<HabitLog> _getEventsForDay(DateTime day) {
     });
   }
 
+  void _confirmDeleteHabit(Habit habit) {
+    final parentContext = context;
+    showDialog(
+      context: parentContext,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text("Delete Habit"),
+          content: Text("Are you sure you want to delete the habit \"${habit.name}\"? This action cannot be undone."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop(); // Close dialog
+                await controller.deleteHabit(habit.id!);
+                await _loadAll(); // Refresh data
+              },
+              child: const Text("Delete", style: TextStyle(color: Colors.redAccent)),
+            ),
+          ],
+        );
+      }
+    );
+  }
+
+  void _showEditHabitDialog(Habit habit) {
+    final TextEditingController nameCtrl =
+        TextEditingController(text: habit.name);
+    final parentContext = context;
+    showDialog(
+      context: parentContext,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text("Edit Habit"),
+          content: TextField(
+            controller: nameCtrl,
+            decoration: InputDecoration(labelText: "Habit name"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async {
+                final newName = nameCtrl.text.trim();
+                if (newName.isNotEmpty) {
+                  final updated = habit.copyWith(name: newName);
+                  await controller.updateHabit(updated);
+                  await _loadAll();
+                }
+                Navigator.pop(dialogContext);
+              },
+              child: Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _completeHabitToday(Habit habit) async {
+  final newLog = HabitLog(
+    habitId: habit.id!,
+    date: DateTime.now(),
+    completed: true,
+  );
+
+  await controller.addHabitLog(newLog);
+  await _loadAll(); 
+}
+
   @override
   Widget build(BuildContext context) {
 
-    return Scaffold(
-      backgroundColor: Color(0xff7886c7),
-      body: _loading
-      ? const Center(child: CircularProgressIndicator())
-      : Center(
-        child: Stack(
-          children: <Widget> [
-            IgnorePointer(
-              ignoring: _showInfoState,
-              child: ListView.builder(
-                scrollDirection: Axis.vertical,
-                shrinkWrap: true,
-                padding: EdgeInsets.zero, // added
-                itemCount: 1 + _habits.length, //changed
-                itemBuilder:(context, index) {
-                  if (index == 0) {
-                    return Padding(
+  return Scaffold(
+    backgroundColor: const Color(0xff7886c7),
+    body: _loading
+        ? const Center(child: CircularProgressIndicator())
+        : Stack(
+            children: [
+              IgnorePointer(
+                ignoring: _showInfoState,
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    Padding(
                       padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
                       child: Container(
                         decoration: BoxDecoration(
@@ -118,80 +187,116 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                           borderRadius: BorderRadius.circular(25),
                         ),
                         child: TableCalendar<HabitLog>(
-                                locale: "en_US",
-                                headerStyle: HeaderStyle(
-                                  titleCentered: true,
-                                  formatButtonVisible: false,
-                                  headerMargin:
-                                      const EdgeInsets.only(bottom: 10),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.redAccent,
-                                    borderRadius: BorderRadius.vertical(
-                                        top: Radius.circular(25)),
-                                  ),
-                                  titleTextStyle: GoogleFonts.openSans(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                calendarStyle: CalendarStyle(
-                                  markerDecoration: const BoxDecoration(
-                                    color: Colors.redAccent,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  markersAlignment: Alignment.bottomCenter,
-                                  markersMaxCount: 3,
-                                  todayDecoration: BoxDecoration(
-                                    color: Colors.redAccent.withOpacity(0.15),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  selectedDecoration: const BoxDecoration(
-                                    color: Colors.redAccent,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                // Calendar range (wider + dynamic)
-                                firstDay: DateTime.utc(_today.year - 1, 1, 1),
-                                lastDay: DateTime.utc(_today.year + 1, 12, 31),
-                                focusedDay: _focusedDay,
-                                selectedDayPredicate: (day) =>
-                                    isSameDay(_selectedDay, day),
-                                eventLoader: _getEventsForDay,
-                                onDaySelected: _onDaySelected,
+                          locale: "en_US",
+                          headerStyle: HeaderStyle(
+                            titleCentered: true,
+                            formatButtonVisible: false,
+                            headerMargin: const EdgeInsets.only(bottom: 10),
+                            decoration: const BoxDecoration(
+                              color: Colors.redAccent,
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(25),
                               ),
-                            )
-                          );  
-                        }
-                        
-                  final habit = _habits[index - 1];
-                  final completed = (habit.id != null)
-                      ? (_completionCountByHabit[habit.id!] ?? 0)
-                      : 0;
-
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 30),
-                    child: Container(
-                      height: 200,
-                      width: 360,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(25),
-                        color: Color(0xfffff2f2),
-                      ),
-                      child: Center(
-                        child: Text(
-                          "${habit.name}\nTotal logs: $completed",
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.openSans(
-                            fontSize: 24,
+                            ),
+                            titleTextStyle: GoogleFonts.openSans(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
+                          calendarStyle: CalendarStyle(
+                            markerDecoration: const BoxDecoration(
+                              color: Colors.redAccent,
+                              shape: BoxShape.circle,
+                            ),
+                            markersAlignment: Alignment.bottomCenter,
+                            markersMaxCount: 3,
+                            todayDecoration: BoxDecoration(
+                              color: Colors.redAccent.withOpacity(0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            selectedDecoration: const BoxDecoration(
+                              color: Colors.redAccent,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          firstDay: DateTime.utc(_today.year - 1, 1, 1),
+                          lastDay: DateTime.utc(_today.year + 1, 12, 31),
+                          focusedDay: _focusedDay,
+                          selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                          eventLoader: _getEventsForDay,
+                          onDaySelected: _onDaySelected,
                         ),
                       ),
                     ),
-                  );
-                },
+
+                    for (final habit in _habits)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 30),
+                        child: Container(
+                          height: 200,
+                          decoration: BoxDecoration(
+                            color: const Color(0xfffff2f2),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  habit.name,
+                                  style: GoogleFonts.openSans(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  "Total logs: ${_completionCountByHabit[habit.id] ?? 0}",
+                                  style: GoogleFonts.openSans(fontSize: 16),
+                                ),
+
+                                const Spacer(),
+                                
+                                ElevatedButton(
+                                  onPressed: () => _completeHabitToday(habit),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    minimumSize: const Size(double.infinity, 40),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    "Complete Today",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 10),
+                                
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                                      onPressed: () => _showEditHabitDialog(habit),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete, color: Colors.redAccent),
+                                      onPressed: () => _confirmDeleteHabit(habit),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
 
             AnimatedOpacity(
               opacity: _showInfoState ? 1 : 0,
@@ -234,9 +339,7 @@ List<HabitLog> _getEventsForDay(DateTime day) {
             ),
           ]
         ),
-      ),
-      
-    );
+      );
   }
     Widget _buildSelectedDayPanel() {
     final sel = _selectedDay != null ? _dateOnly(_selectedDay!) : null;

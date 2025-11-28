@@ -45,6 +45,12 @@ class _MyStatPageState extends State<StatPage> {
     _loadHabits();
   }
 
+  @override
+  void didChangeDependencies() {
+  super.didChangeDependencies();
+    _loadHabits();
+  }
+
   Future<void> _loadHabits() async {
     final habits = await _habitController.getAllHabits();
     setState(() {

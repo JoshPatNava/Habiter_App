@@ -40,4 +40,22 @@ factory Habit.fromMap(Map<String, dynamic> map) {
         : (map['goal_count'] as num).toInt(),
     );
   }
+
+  Habit copyWith({
+    int? id,
+    String? name,
+    String? description,
+    int? frequency,
+    DateTime? startDate,
+    int? goalCount,
+  }) {
+    return Habit(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    description: description ?? this.description,
+    frequency: frequency ?? this.frequency,
+    startDate: startDate ?? this.startDate,
+    goalCount: goalCount ?? this.goalCount,
+  );
+}
 }
