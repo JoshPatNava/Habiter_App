@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
+import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:form_builder_validators/form_builder_validators.dart';
 
 import '../controller/habit_controller.dart';
 import '../models/habit.dart';
@@ -15,6 +18,17 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   //Controller OBJ
   final HabitController controller = HabitController();
+
+  final PanelController _panelController = PanelController();
+  final GlobalKey<FormBuilderState> _formKey = GlobalKey<FormBuilderState>();
+  bool _weekdaysVisible = false;
+
+  List<DropdownMenuItem<int>> get frequencies {
+    return [
+      DropdownMenuItem(value: 1, child: Text("Daily")),
+      DropdownMenuItem(value: 2, child: Text("Weekly")),
+    ];
+  }
 
   DateTime _today = DateTime.now();
   DateTime _focusedDay = DateTime.now();
@@ -76,6 +90,104 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     }
   }
+
+  Future<void> _submitHabit() async {
+    if (_formKey.currentState!.saveAndValidate()) {
+      final data = _formKey.currentState!.value;
+
+      final newHabit = Habit(
+        name: data['HabitName'],
+        description: data['HabitDesc'],
+        frequency: data['HabitFreq'],
+        startDate: DateTime.now(),
+        goalCount:
+            _weekdaysVisible ? (data['WeeklyFreq'] as List<int>?)?.length : null,
+      );
+
+      await controller.addHabit(newHabit);
+      await _loadAll();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Habit Added!")),
+        );
+      }
+
+      _panelController.close();
+      _formKey.currentState?.reset();
+    }
+}
+
+Widget _buildAddHabitForm() {
+    return FormBuilder(
+      key: _formKey,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 80, left: 40, right: 40),
+        child: Column(
+          children: [
+            FormBuilderTextField(
+              name: 'HabitName',
+              maxLength: 30,
+              decoration: InputDecoration(
+                enabledBorder: OutlineInputBorder(borderSide: BorderSide(width: 2)),
+                focusedBorder: OutlineInputBorder(borderSide: BorderSide(width: 2)),
+                hintText: "Your Habit Name",
+              ),
+              validator: FormBuilderValidators.required(),
+            ),
+            const SizedBox(height: 30),
+
+            FormBuilderTextField(
+              name: 'HabitDesc',
+              maxLength: 100,
+              decoration: InputDecoration(
+                enabledBorder: OutlineInputBorder(borderSide: BorderSide(width: 2)),
+                focusedBorder: OutlineInputBorder(borderSide: BorderSide(width: 2)),
+                hintText: "Description...",
+              ),
+            ),
+            const SizedBox(height: 30),
+
+            FormBuilderDropdown<int>(
+              name: 'HabitFreq',
+              items: frequencies,
+              initialValue: 1,
+              onChanged: (value) {
+                setState(() {
+                  _weekdaysVisible = (value == 2);
+                });
+              },
+            ),
+            const SizedBox(height: 30),
+
+            Visibility(
+              visible: _weekdaysVisible,
+              child: FormBuilderCheckboxGroup(
+                name: 'WeeklyFreq',
+                options: const [
+                  FormBuilderFieldOption(value: 1, child: Text('Su')),
+                  FormBuilderFieldOption(value: 2, child: Text('M')),
+                  FormBuilderFieldOption(value: 3, child: Text('Tu')),
+                  FormBuilderFieldOption(value: 4, child: Text('W')),
+                  FormBuilderFieldOption(value: 5, child: Text('Th')),
+                  FormBuilderFieldOption(value: 6, child: Text('F')),
+                  FormBuilderFieldOption(value: 7, child: Text('Sa')),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
+            ElevatedButton(
+              onPressed: _submitHabit,
+              child: const Text('Submit'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
 
 List<HabitLog> _getEventsForDay(DateTime day) {
     return _logsByDay[_dateOnly(day)] ?? const <HabitLog>[];
@@ -170,9 +282,25 @@ List<HabitLog> _getEventsForDay(DateTime day) {
 
   return Scaffold(
     backgroundColor: const Color(0xff7886c7),
-    body: _loading
-        ? const Center(child: CircularProgressIndicator())
-        : Stack(
+    floatingActionButton: FloatingActionButton(
+      child: Icon(Icons.add, color: Colors.white),
+      backgroundColor: Colors.redAccent,
+      onPressed: () {
+        _panelController.open();
+      },
+    ),
+    body: SlidingUpPanel(
+        controller: _panelController,
+        minHeight: 0,
+        maxHeight: MediaQuery.of(context).size.height * 0.8,
+        color: Color(0xfffff2f2),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(50)),
+
+        panel: _buildAddHabitForm(),
+
+        body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
             children: [
               IgnorePointer(
                 ignoring: _showInfoState,
@@ -339,7 +467,8 @@ List<HabitLog> _getEventsForDay(DateTime day) {
             ),
           ]
         ),
-      );
+      ),
+    );
   }
     Widget _buildSelectedDayPanel() {
     final sel = _selectedDay != null ? _dateOnly(_selectedDay!) : null;
