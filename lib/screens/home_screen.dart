@@ -55,7 +55,7 @@ class _MyHomePageState extends State<MyHomePage> {
         completionCountByHabit[habit.id!] = logs.length;
 
         for (final log in logs) {
-          final logDate = _dateOnly(log.date);
+          final logDate = _dateOnly(DateTime.parse(log.date));
           logsByDay.putIfAbsent(logDate, () => <HabitLog>[]).add(log);
         }
       }
@@ -157,7 +157,7 @@ List<HabitLog> _getEventsForDay(DateTime day) {
   Future<void> _completeHabitToday(Habit habit) async {
   final newLog = HabitLog(
     habitId: habit.id!,
-    date: DateTime.now(),
+    date: DateFormat('yyyy-MM-dd').format(DateTime.now()),
     completed: true,
   );
 
@@ -352,7 +352,7 @@ List<HabitLog> _getEventsForDay(DateTime day) {
       ? _selectedDayLogs.where((l) => l.completed).toList()
       : List<HabitLog>.from(_selectedDayLogs);
 
-    filtered.sort((a, b) => b.date.compareTo(a.date));
+    filtered.sort((a, b) => DateTime.parse(b.date).compareTo(DateTime.parse(a.date)));
 
      return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -399,7 +399,7 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                   final log = filtered[i];
                   final habit = _habitById[log.habitId];
                   final name = habit?.name ?? "Habit ${log.habitId}";
-                  final time = timeFormatter.format(log.date);
+                  final time = timeFormatter.format(DateTime.parse(log.date));
 
                   return ListTile(
                     dense: true,

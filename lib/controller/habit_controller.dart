@@ -1,6 +1,8 @@
 import '../db/database_helper.dart';
 import '../models/habit.dart';
 import '../models/habit_log.dart';
+import 'package:intl/intl.dart';
+
 
 class HabitController {
   final DatabaseHelper _dbHelper = DatabaseHelper();
@@ -30,9 +32,14 @@ class HabitController {
   }
 
   // get logs for specfied habit
-  Future<List<HabitLog>> getHabitLogs(int habitId, {DateTime? forDay}) async {
-    return await _dbHelper.getHabitLogs(habitId, forDay: forDay);
+Future<List<HabitLog>> getHabitLogs(int habitId, {String? forDay}) async {
+  if (forDay == null) {
+    return await _dbHelper.getHabitLogs(habitId);
   }
+
+  return await _dbHelper.getHabitLogs(habitId, forDay: forDay);
+}
+
 
   // count how many days a habit complete
   Future<int> getCompletionCount(int habitId) async {
@@ -41,7 +48,8 @@ class HabitController {
   }
 
   Future<bool> isCompletedOn(int habitId, DateTime day) async {
-    final logs = await _dbHelper.getHabitLogs(habitId, forDay: day);
+    final dayString = DateFormat('yyyy-MM-dd').format(day);
+    final logs = await _dbHelper.getHabitLogs(habitId, forDay: dayString);
     return logs.any((log) => log.completed);
   }
 
@@ -50,8 +58,14 @@ class HabitController {
     required DateTime day,
     required bool completed,
   }) async {
-    final log = HabitLog(habitId: habitId, date: day, completed: completed);
-    await addHabitLog(log);
+    final dayString = DateFormat('yyyy-MM-dd').format(day);
+
+     final log = HabitLog(
+      habitId: habitId,
+      date: dayString,    
+      completed: completed,
+     );
+    await _dbHelper.upsertHabitLog(log);
   }
 
    Future<Map<int, bool>> completionForAll(
@@ -59,10 +73,15 @@ class HabitController {
     DateTime day,
   ) async {
     final result = <int, bool>{};
+
+    final dayString = DateFormat('yyyy-MM-dd').format(day);
+
     for (final h in habits) {
       if (h.id == null) continue;
-      result[h.id!] = await isCompletedOn(h.id!, day);
+      final logs = await _dbHelper.getHabitLogs(h.id!, forDay: dayString);
+      result[h.id!] = logs.any((log) => log.completed);
     }
+
     return result;
   }
 }

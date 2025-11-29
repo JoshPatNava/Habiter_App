@@ -81,46 +81,49 @@ class DatabaseHelper {
   // Add habit log & update if exists
   Future<int> upsertHabitLog(HabitLog log) async {
     final db = await database;
-    final day = DateTime(log.date.year, log.date.month, log.date.day).toIso8601String().substring(0,10);
-    final map = log.toMap()..['date'] = day;
-    final updated = await db.update(
+    final existing = await db.query(
       'habit_logs',
-      map,
       where: 'habit_id = ? AND date = ?',
-      whereArgs: [log.habitId, day],
+      whereArgs: [log.habitId, log.date],
     );
 
-    if(updated == 0) {
-      return db.insert('habit_logs', map, conflictAlgorithm: ConflictAlgorithm.replace);
+  
+    if (existing.isNotEmpty) {
+      return await db.update(
+        'habit_logs',
+        log.toMap(),
+        where: 'habit_id = ? AND date = ?',
+        whereArgs: [log.habitId, log.date],
+      );
     }
-    return updated;
+    return await db.insert('habit_logs', log.toMap());
   }
 
   // Get logs for a habit
-  Future<List<HabitLog>> getHabitLogs(int habitId, {DateTime? forDay}) async {
-    final db = await database;
+  Future<List<HabitLog>> getHabitLogs(int habitId, {String? forDay}) async {
+  final db = await database;
 
-    if (forDay != null) {
-      final day = DateTime(forDay.year, forDay.month, forDay.day)
-          .toIso8601String()
-          .substring(0, 10);
-      final rows = await db.query(
-        'habit_logs',
-        where: 'habit_id = ? AND date = ?',
-        whereArgs: [habitId, day],
-        orderBy: 'date DESC',
-      );
-      return rows.map((m) => HabitLog.fromMap(m)).toList();
-    }
-
+  if (forDay != null) {
     final rows = await db.query(
       'habit_logs',
-      where: 'habit_id = ?',
-      whereArgs: [habitId],
+      where: 'habit_id = ? AND date = ?',
+      whereArgs: [habitId, forDay],
       orderBy: 'date DESC',
     );
+
     return rows.map((m) => HabitLog.fromMap(m)).toList();
+  }
+
+  final rows = await db.query(
+    'habit_logs',
+    where: 'habit_id = ?',
+    whereArgs: [habitId],
+    orderBy: 'date DESC',
+  );
+
+  return rows.map((m) => HabitLog.fromMap(m)).toList();
 }
+
 
 
   // Delete habit
