@@ -5,9 +5,12 @@ import '../controller/habit_controller.dart';
 import '../models/habit.dart';
 
 class StatPage extends StatefulWidget {
+  const StatPage({Key? key}) : super(key: key);
+
   @override
   State<StatPage> createState() => _MyStatPageState();  
 }
+
 
 class _MyStatPageState extends State<StatPage> {
   bool _showStatState = false;
@@ -19,6 +22,11 @@ class _MyStatPageState extends State<StatPage> {
   int? _currentStreak;
   int? _bestStreak;
   bool _loadingStats = false;
+  double? _completionRate;
+  int? _weeklyGoal;
+  int? _weeklyProgress;
+  double? _weeklyPercentage;
+
 
 
   @override
@@ -47,6 +55,19 @@ class _MyStatPageState extends State<StatPage> {
         await _habitController.getCurrentStreak(habit.id!);
     _bestStreak =
         await _habitController.getBestStreak(habit.id!);
+    _completionRate = 
+        await _habitController.getCompletionRate(habit);
+    if (habit.frequency == 2) {
+     final goal = await _habitController.getWeeklyGoalProgress(habit);
+
+     _weeklyGoal = goal["goal"];
+     _weeklyProgress = goal["progress"];
+      _weeklyPercentage = goal["percentage"];
+    } else {
+      _weeklyGoal = null;
+      _weeklyProgress = null;
+      _weeklyPercentage = null;
+  }
 
     setState(() {
       _loadingStats = false;
@@ -118,65 +139,124 @@ class _MyStatPageState extends State<StatPage> {
                         ),
                       ),
 
-                      TapRegion(
-                       onTapOutside: (tap) {
-                         setState(() {
-                                _showStatState = false;
-                              });
-                            },
-                            child: Center(
-                              child: Container(
-                                height: 450,
-                                width: 300,
-                                padding: EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                child: _loadingStats
-                                    ? Center(
-                                        child: CircularProgressIndicator())
-                                    : Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          // POPUP TITLE — HABIT NAME
-                                          Text(
-                                            _selectedHabit?.name ?? "",
-                                            style: GoogleFonts.openSans(
-                                              fontSize: 28,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            textAlign: TextAlign.center,
+                      SizedBox.expand(
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.translucent,
+                              onTap: () {
+                                setState(() {
+                                  _showStatState = false;
+                                });
+                              },
+
+                            
+                              child: Center(
+                                child: Container(
+                                  height: 450,
+                                  width: 300,
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: _loadingStats
+                                      ? const Center(
+                                          child:
+                                              CircularProgressIndicator())
+                                      : SingleChildScrollView(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              // TITLE
+                                              Text(
+                                                _selectedHabit?.name ??
+                                                    "",
+                                                style:
+                                                    GoogleFonts.openSans(
+                                                  fontSize: 28,
+                                                  fontWeight:
+                                                      FontWeight.bold,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                              const SizedBox(height: 20),
+
+                                              _buildStatRow(
+                                                "Total completions:",
+                                                _totalCompletions,
+                                              ),
+                                              const SizedBox(height: 10),
+
+                                              _buildStatRow(
+                                                "Current streak:",
+                                                _currentStreak,
+                                              ),
+                                              const SizedBox(height: 10),
+
+                                              _buildStatRow(
+                                                "Best streak:",
+                                                _bestStreak,
+                                              ),
+                                              const SizedBox(height: 10),
+
+                                              _buildStatRowString(
+                                                "Completion rate:",
+                                                _completionRate == null
+                                                    ? "--"
+                                                    : "${(_completionRate! * 100).toStringAsFixed(1)}%",
+                                              ),
+                                              const SizedBox(height: 20),
+
+                                              if (_selectedHabit
+                                                      ?.frequency ==
+                                                  2) ...[
+                                                Text(
+                                                  "Weekly Goals",
+                                                  style: GoogleFonts
+                                                      .openSans(
+                                                    fontSize: 20,
+                                                    fontWeight:
+                                                        FontWeight.bold,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 10),
+
+                                                _buildStatRow(
+                                                    "Weekly goal:",
+                                                    _weeklyGoal),
+                                                const SizedBox(height: 10),
+
+                                                _buildStatRow("Progress:",
+                                                    _weeklyProgress),
+                                                const SizedBox(height: 10),
+
+                                                _buildStatRowString(
+                                                  "Goal progress:",
+                                                  _weeklyPercentage ==
+                                                          null
+                                                      ? "--"
+                                                      : "${(_weeklyPercentage! * 100).toStringAsFixed(1)}%",
+                                                ),
+                                                const SizedBox(height: 20),
+                                              ],
+
+                                              Center(
+                                                child: ElevatedButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      _showStatState =
+                                                          false;
+                                                    });
+                                                  },
+                                                  child: const Text("Close"),
+                                                ),
+                                              ),
+
+                                              const SizedBox(height: 20),
+                                            ],
                                           ),
-
-                                          SizedBox(height: 20),
-
-                                          _buildStatRow("Total completions:",
-                                              _totalCompletions),
-                                          SizedBox(height: 10),
-
-                                          _buildStatRow("Current streak:",
-                                              _currentStreak),
-                                          SizedBox(height: 10),
-
-                                          _buildStatRow("Best streak:",
-                                              _bestStreak),
-
-                                          Spacer(),
-
-                                          Center(
-                                            child: ElevatedButton(
-                                              onPressed: () {
-                                                setState(() {
-                                                  _showStatState = false;
-                                                });
-                                              },
-                                              child: Text("Close"),
-                                            ),
-                                          )
-                                        ],
-                                      ),
+                                        ),
+                                ),
                               ),
                             ),
                           ),
@@ -189,8 +269,24 @@ class _MyStatPageState extends State<StatPage> {
       ),
     );
   }
-
-  // NEW: Row for displaying stat label + value
+  Widget _buildStatRowString(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.openSans(fontSize: 16),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.openSans(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
   Widget _buildStatRow(String label, int? value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SettingsPage extends StatefulWidget {
+  const SettingsPage({Key? key}) : super(key: key);
+
   @override
   State<SettingsPage> createState() => _MySettingsPageState();  
 }
+
 
 class _MySettingsPageState extends State<SettingsPage> {
   bool _showSettingsState = false;

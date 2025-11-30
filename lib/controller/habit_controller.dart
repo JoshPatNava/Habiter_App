@@ -87,61 +87,120 @@ Future<List<HabitLog>> getHabitLogs(int habitId, {String? forDay}) async {
 
   Future<int> getTotalCompletions(int habitId) async {
     final logs = await _dbHelper.getHabitLogs(habitId);
-    return logs.where((log) => log.completed == 1).length;
-  }
-
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
+    return logs.where((log) => log.completed).length;
   }
 
   Future<int> getCurrentStreak(int habitId) async {
     final logs = await _dbHelper.getHabitLogs(habitId);
-    logs.sort((a, b) => b.date.compareTo(a.date)); 
+   final completedLogs = logs
+      .where((l) => l.completed)
+      .toList()
+    ..sort((a, b) => b.date.compareTo(a.date));
 
-    int streak = 0;
+   if (completedLogs.isEmpty) return 0;
+
+   int streak = 0;
     DateTime today = DateTime.now();
-    DateTime expectedDate = DateTime(today.year, today.month, today.day);
+  DateTime expectedDay =
+      DateTime(today.year, today.month, today.day); 
 
-    for (var log in logs) {
-      DateTime logDate = DateTime.parse(log.date);
+  for (final log in completedLogs) {
+    final logDayDate = DateTime.parse(log.date);
+    final logDay =
+        DateTime(logDayDate.year, logDayDate.month, logDayDate.day);
 
-      if (log.completed == 1 && _isSameDay(logDate, expectedDate)) {
-        streak++;
-        expectedDate = expectedDate.subtract(Duration(days: 1));
-      } else if (logDate.isBefore(expectedDate)) {
-        break;
-      }
+    if (logDay == expectedDay) {
+      streak++;
+      expectedDay = expectedDay.subtract(Duration(days: 1));
+    } else if (logDay.isBefore(expectedDay)) {
+      break;
     }
-
+  }
     return streak;
   }
 
   Future<int> getBestStreak(int habitId) async {
     final logs = await _dbHelper.getHabitLogs(habitId);
-    logs.sort((a, b) => a.date.compareTo(b.date)); 
+   final completedLogs = logs
+      .where((l) => l.completed)
+      .toList()
+    ..sort((a, b) => a.date.compareTo(b.date));
 
-    int best = 0;
-    int current = 0;
-    DateTime? previousDay;
+  if (completedLogs.isEmpty) return 0;
 
-    for (var log in logs) {
-      DateTime logDate = DateTime.parse(log.date);
+  int current = 1;
+  int best = 1;
 
-      if (log.completed == 1) {
-        if (previousDay != null &&
-            logDate.difference(previousDay!).inDays == 1) {
-          current++;
-        } else {
-          current = 1;
-        }
-        best = current > best ? current : best;
+  DateTime? prevDay;
+
+  for (final log in completedLogs) {
+    final logDate = DateTime.parse(log.date);
+    final logDay =
+        DateTime(logDate.year, logDate.month, logDate.day);
+
+    if (prevDay != null) {
+      final diff = logDay.difference(prevDay!).inDays;
+
+      if (diff == 1) {
+        current++;
+      } else if (diff > 1) {
+        current = 1;
       }
 
-      previousDay = logDate;
+      if (current > best) best = current;
     }
+
+    prevDay = logDay;
+  }
 
     return best;
   }
+
+
+  Future<double> getCompletionRate(Habit habit) async {
+    final logs = await _dbHelper.getHabitLogs(habit.id!);
+    final completedLogs = logs.where((l) => l.completed).length;
+
+    final start = DateTime(
+      habit.startDate.year,
+      habit.startDate.month,
+      habit.startDate.day,
+    );
+    final today = DateTime.now();
+
+    final days = today.difference(start).inDays + 1;
+    if (days <= 0) return 0;
+
+    return completedLogs / days;
+  }
+
+  Future<Map<String, dynamic>> getWeeklyGoalProgress(Habit habit) async {
+  if (habit.frequency != 2) {
+    return { "goal": null, "progress": null, "percentage": null };
+  }
+
+  final logs = await _dbHelper.getHabitLogs(habit.id!);
+
+  final now = DateTime.now();
+  final weekStart = now.subtract(Duration(days: now.weekday % 7));
+  final weekEnd = weekStart.add(Duration(days: 6));
+
+  final thisWeekLogs = logs.where((log) {
+    final dt = DateTime.parse(log.date);
+    return dt.isAfter(weekStart.subtract(Duration(seconds: 1))) &&
+           dt.isBefore(weekEnd.add(Duration(days: 1)));
+  }).toList();
+
+  final completed = thisWeekLogs.where((l) => l.completed).length;
+
+  final goalCount = habit.goalCount ?? 0; // how many days per week
+
+  return {
+    "goal": goalCount,
+    "progress": completed,
+    "percentage": goalCount == 0 ? 0 : completed / goalCount,
+  };
+}
 
 
 }
