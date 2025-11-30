@@ -84,4 +84,66 @@ Future<List<HabitLog>> getHabitLogs(int habitId, {String? forDay}) async {
 
     return result;
   }
+
+  Future<int> getTotalCompletions(int habitId) async {
+    final logs = await _dbHelper.getHabitLogs(habitId);
+    return logs.where((log) => log.completed == 1).length;
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  Future<int> getCurrentStreak(int habitId) async {
+    final logs = await _dbHelper.getHabitLogs(habitId);
+    logs.sort((a, b) => b.date.compareTo(a.date)); 
+
+    int streak = 0;
+    DateTime today = DateTime.now();
+    DateTime expectedDate = DateTime(today.year, today.month, today.day);
+
+    for (var log in logs) {
+      DateTime logDate = DateTime.parse(log.date);
+
+      if (log.completed == 1 && _isSameDay(logDate, expectedDate)) {
+        streak++;
+        expectedDate = expectedDate.subtract(Duration(days: 1));
+      } else if (logDate.isBefore(expectedDate)) {
+        break;
+      }
+    }
+
+    return streak;
+  }
+
+  Future<int> getBestStreak(int habitId) async {
+    final logs = await _dbHelper.getHabitLogs(habitId);
+    logs.sort((a, b) => a.date.compareTo(b.date)); 
+
+    int best = 0;
+    int current = 0;
+    DateTime? previousDay;
+
+    for (var log in logs) {
+      DateTime logDate = DateTime.parse(log.date);
+
+      if (log.completed == 1) {
+        if (previousDay != null &&
+            logDate.difference(previousDay!).inDays == 1) {
+          current++;
+        } else {
+          current = 1;
+        }
+        best = current > best ? current : best;
+      }
+
+      previousDay = logDate;
+    }
+
+    return best;
+  }
+
+
 }
+
+

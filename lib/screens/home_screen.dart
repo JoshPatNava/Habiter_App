@@ -66,8 +66,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
       for (final habit in habits) {
         final logs = await controller.getHabitLogs(habit.id!);
-        completionCountByHabit[habit.id!] = logs.length;
-
+        completionCountByHabit[habit.id!] =
+          logs.where((log) => log.completed).length;
         for (final log in logs) {
           final logDate = _dateOnly(DateTime.parse(log.date));
           logsByDay.putIfAbsent(logDate, () => <HabitLog>[]).add(log);
@@ -475,7 +475,6 @@ List<HabitLog> _getEventsForDay(DateTime day) {
     final friendlyDate = sel != null
         ? "${sel.year}-${sel.month.toString().padLeft(2, '0')}-${sel.day.toString().padLeft(2, '0')}"
         : "";
-    final timeFormatter = DateFormat('h:mm a');
 
     final filtered = _completedOnly
       ? _selectedDayLogs.where((l) => l.completed).toList()
@@ -486,7 +485,6 @@ List<HabitLog> _getEventsForDay(DateTime day) {
      return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      // Title + toggle
       Row(
         children: [
           Expanded(
@@ -528,7 +526,6 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                   final log = filtered[i];
                   final habit = _habitById[log.habitId];
                   final name = habit?.name ?? "Habit ${log.habitId}";
-                  final time = timeFormatter.format(DateTime.parse(log.date));
 
                   return ListTile(
                     dense: true,
@@ -542,7 +539,7 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                       style: GoogleFonts.openSans(fontSize: 15, fontWeight: FontWeight.w600),
                     ),
                     subtitle: Text(
-                      "Logged at $time",
+                      "Completed ",
                       style: GoogleFonts.openSans(fontSize: 13),
                     ),
                   );

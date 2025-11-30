@@ -13,17 +13,17 @@ class _MyStatPageState extends State<StatPage> {
   bool _showStatState = false;
   bool _loading = true;
   final HabitController _habitController = HabitController();
-   List<Habit> _habits = [];
+  List<Habit> _habits = [];
+  Habit? _selectedHabit;
+  int? _totalCompletions;
+  int? _currentStreak;
+  int? _bestStreak;
+  bool _loadingStats = false;
+
 
   @override
   void initState() {
     super.initState();
-    _loadHabits();
-  }
-
-  @override
-  void didChangeDependencies() {
-  super.didChangeDependencies();
     _loadHabits();
   }
 
@@ -33,6 +33,31 @@ class _MyStatPageState extends State<StatPage> {
       _habits = habits;
       _loading = false;
     });
+  }
+    
+  Future<void> _loadHabitStats(Habit habit) async {
+   setState(() {
+      _loadingStats = true;
+      _selectedHabit = habit;
+   });
+
+    _totalCompletions =
+        await _habitController.getTotalCompletions(habit.id!);
+    _currentStreak =
+        await _habitController.getCurrentStreak(habit.id!);
+    _bestStreak =
+        await _habitController.getBestStreak(habit.id!);
+
+    setState(() {
+      _loadingStats = false;
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant StatPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _loadHabits(); 
+    _showStatState = false;
   }
 
   @override
@@ -57,6 +82,7 @@ class _MyStatPageState extends State<StatPage> {
                   ),
                   itemBuilder: (context, index) => GestureDetector(
                     onTap: () {
+                      _loadHabitStats(_habits[index]);
                       setState(() {
                         _showStatState = true;
                       });
@@ -93,34 +119,94 @@ class _MyStatPageState extends State<StatPage> {
                       ),
 
                       TapRegion(
-                        onTapOutside:(tap) {
-                          setState(() {
-                            _showStatState = false; 
-                          });
-                        },
-                        child: Center(
-                          child: Container(
-                            height: 450,
-                            width: 300,
-                            color: Colors.white,
+                       onTapOutside: (tap) {
+                         setState(() {
+                                _showStatState = false;
+                              });
+                            },
                             child: Center(
-                              child: Text(
-                                "Habit Stats",
-                                style: GoogleFonts.openSans(
-                                  fontSize: 30,
+                              child: Container(
+                                height: 450,
+                                width: 300,
+                                padding: EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(15),
                                 ),
+                                child: _loadingStats
+                                    ? Center(
+                                        child: CircularProgressIndicator())
+                                    : Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          // POPUP TITLE — HABIT NAME
+                                          Text(
+                                            _selectedHabit?.name ?? "",
+                                            style: GoogleFonts.openSans(
+                                              fontSize: 28,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+
+                                          SizedBox(height: 20),
+
+                                          _buildStatRow("Total completions:",
+                                              _totalCompletions),
+                                          SizedBox(height: 10),
+
+                                          _buildStatRow("Current streak:",
+                                              _currentStreak),
+                                          SizedBox(height: 10),
+
+                                          _buildStatRow("Best streak:",
+                                              _bestStreak),
+
+                                          Spacer(),
+
+                                          Center(
+                                            child: ElevatedButton(
+                                              onPressed: () {
+                                                setState(() {
+                                                  _showStatState = false;
+                                                });
+                                              },
+                                              child: Text("Close"),
+                                            ),
+                                          )
+                                        ],
+                                      ),
                               ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ]
+      ),
+    );
+  }
+
+  // NEW: Row for displaying stat label + value
+  Widget _buildStatRow(String label, int? value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.openSans(fontSize: 16),
+        ),
+        Text(
+          value?.toString() ?? "--",
+          style: GoogleFonts.openSans(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
           ),
         ),
-      );
+      ],
+    );
   }
 }
