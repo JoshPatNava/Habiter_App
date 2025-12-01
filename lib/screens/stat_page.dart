@@ -26,6 +26,8 @@ class _MyStatPageState extends State<StatPage> {
   int? _weeklyGoal;
   int? _weeklyProgress;
   double? _weeklyPercentage;
+  List<bool> _last7Days = [];
+  Map<String, String> _lifetimeStats = {};
 
 
 
@@ -55,8 +57,13 @@ class _MyStatPageState extends State<StatPage> {
         await _habitController.getCurrentStreak(habit.id!);
     _bestStreak =
         await _habitController.getBestStreak(habit.id!);
+    _last7Days =
+        await _habitController.getLast7DaysCompletion(habit.id!);
     _completionRate = 
         await _habitController.getCompletionRate(habit);
+    _lifetimeStats =
+        await getLifetimeStats();
+
     if (habit.frequency == 2) {
      final goal = await _habitController.getWeeklyGoalProgress(habit);
 
@@ -73,6 +80,69 @@ class _MyStatPageState extends State<StatPage> {
       _loadingStats = false;
     });
   }
+
+  List<String> _getAchievements() {
+  List<String> achievements = [];
+
+  if ((_bestStreak ?? 0) >= 3) achievements.add("🏆 3-Day Streak");
+  if ((_bestStreak ?? 0) >= 7) achievements.add("🏆 7-Day Streak");
+  if ((_bestStreak ?? 0) >= 14) achievements.add("🏆 14-Day Streak");
+
+  if ((_totalCompletions ?? 0) >= 50) achievements.add("💪 50 Completions");
+  if ((_totalCompletions ?? 0) >= 100) achievements.add("🐱 100 Completions");
+
+  if (_selectedHabit?.frequency == 2) {
+    if (_weeklyGoal != null &&
+        _weeklyProgress != null &&
+        _weeklyProgress == _weeklyGoal &&
+        _weeklyGoal! > 0) {
+      achievements.add("⭐️ Perfect Week");
+    }
+  }
+  if (achievements.isEmpty) {
+    achievements.add("No achievements yet");
+  }
+
+  return achievements;
+}
+
+Future<Map<String, String>> getLifetimeStats() async {
+  if (_selectedHabit == null) {
+    return {};
+  }
+
+  DateTime start = _selectedHabit!.startDate;
+  DateTime now = DateTime.now();
+  int habitAgeDays = now.difference(start).inDays + 1;
+
+  final logs = await _habitController.getAllLogsForHabit(_selectedHabit!.id!);
+  final completedLogs = logs.where((l) => l.completed).toList();
+
+  if (_totalCompletions == null || _totalCompletions == 0) {
+    return {
+      "Habit age": "$habitAgeDays days",
+      "First completion": "No completions yet",
+      "Last completion": "No completions yet",
+      "Days tracked": "$habitAgeDays days",
+    };
+  }
+
+  completedLogs.sort((a, b) => a.date.compareTo(b.date));
+
+  final firstDate = DateTime.parse(completedLogs.first.date);
+  final lastDate = DateTime.parse(completedLogs.last.date);
+
+  String format(DateTime d) =>
+      "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
+
+  return {
+    "Habit age": "$habitAgeDays days",
+    "First completion": format(firstDate),
+    "Last completion": format(lastDate),
+    "Days tracked": "$habitAgeDays days",
+  };
+}
+
 
   @override
   void didUpdateWidget(covariant StatPage oldWidget) {
@@ -167,7 +237,6 @@ class _MyStatPageState extends State<StatPage> {
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              // TITLE
                                               Text(
                                                 _selectedHabit?.name ??
                                                     "",
@@ -221,6 +290,21 @@ class _MyStatPageState extends State<StatPage> {
                                                 ),
                                                 const SizedBox(height: 10),
 
+                                                SizedBox(height: 20),
+
+                                                Text(
+                                                  "Last 7 Days",
+                                                  style: GoogleFonts.openSans(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                ),
+                                                ),
+                                                const SizedBox(height: 10),
+
+                                                _build7DayChart(),
+
+                                                const SizedBox(height: 20),   
+
                                                 _buildStatRow(
                                                     "Weekly goal:",
                                                     _weeklyGoal),
@@ -239,6 +323,62 @@ class _MyStatPageState extends State<StatPage> {
                                                 ),
                                                 const SizedBox(height: 20),
                                               ],
+                                              SizedBox(height: 20),
+                                              Text(
+                                                "Lifetime Stats",
+                                                style: GoogleFonts.openSans(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              SizedBox(height: 10),
+
+                                              Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: _lifetimeStats.entries.map((entry) {
+                                                return Padding(
+                                                  padding: const EdgeInsets.symmetric(vertical: 3),
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    children: [
+                                                      Text(entry.key,
+                                                        style: GoogleFonts.openSans(fontSize: 16)),
+                                                      Text(entry.value,
+                                                        style: GoogleFonts.openSans(
+                                                          fontSize: 16,
+                                                          fontWeight: FontWeight.w600,
+                                                        )),
+                                                    ],
+                                                  ),
+                                                );
+                                              }).toList(),
+                                            ),
+                                              Text(
+                                                "Achievements",
+                                                style: GoogleFonts.openSans(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              SizedBox(height: 10),
+
+                                              Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: _getAchievements().map((a) {
+                                                  return Padding(
+                                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                                  child: Text(
+                                                    a,
+                                                    style: GoogleFonts.openSans(
+                                                      fontSize: 16,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                );
+                                              }).toList(),
+                                            ),
+
+                                            SizedBox(height: 20),
 
                                               Center(
                                                 child: ElevatedButton(
@@ -305,4 +445,38 @@ class _MyStatPageState extends State<StatPage> {
       ],
     );
   }
+
+  Widget _build7DayChart() {
+  final labels = ["S", "M", "T", "W", "T", "F", "S"];
+
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: List.generate(7, (i) {
+      final done = _last7Days[i];
+
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          AnimatedContainer(
+            duration: Duration(milliseconds: 300),
+            height: done ? 40 : 10,
+            width: 12,
+            decoration: BoxDecoration(
+              color: done ? Colors.green : Colors.grey.shade400,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          SizedBox(height: 6),
+          Text(
+            labels[i],
+            style: GoogleFonts.openSans(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      );
+    }),
+  );
+}
 }

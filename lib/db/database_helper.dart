@@ -1,5 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:flutter/services.dart';
+import 'dart:io';
 
 import '../models/habit.dart';
 import '../models/habit_log.dart';
@@ -14,20 +16,37 @@ class DatabaseHelper {
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('habit_tracker.db');
+    _database = await _initDB();
     return _database!;
   }
 
-  Future<Database> _initDB(String filePath) async {
+  Future<Database> _initDB() async {
     final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
-    return openDatabase(path, 
-                        version: 1,
-                        onConfigure: (db) async {
-                          await db.execute('PRAGMA foreign_keys = ON');
-                        }, 
-                        onCreate: _createDB);
+    final path = join(dbPath, 'habit.db');
+
+    final exists = await databaseExists(path);
+
+    if (!exists) {
+      try {
+        ByteData data = await rootBundle.load("asset/db/habit.db");
+        List<int> bytes = data.buffer.asUint8List(
+          data.offsetInBytes,
+          data.lengthInBytes,
+        );
+
+        await File(path).writeAsBytes(bytes, flush: true);
+      } catch (e) {
+        print("Error copying preloaded DB. Falling back to onCreate(): $e");
+      }
+    }
+
+    return await openDatabase(
+      path,
+      version: 1,
+      onCreate: _createDB,
+    );
   }
+
 
   Future<void> _createDB(Database db, int version) async {
     await db.execute(''' 

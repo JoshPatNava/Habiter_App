@@ -202,6 +202,34 @@ Future<List<HabitLog>> getHabitLogs(int habitId, {String? forDay}) async {
   };
 }
 
+Future<List<bool>> getLast7DaysCompletion(int habitId) async {
+  final logs = await _dbHelper.getHabitLogs(habitId);
+
+  final completedDays = logs
+      .where((l) => l.completed)
+      .map((l) => l.date)
+      .toSet();
+
+  DateTime today = DateTime.now();
+
+  List<bool> last7 = [];
+
+  for (int i = 6; i >= 0; i--) {
+    final day = today.subtract(Duration(days: i));
+    final formatted = "${day.year.toString().padLeft(4, '0')}-"
+                      "${day.month.toString().padLeft(2, '0')}-"
+                      "${day.day.toString().padLeft(2, '0')}";
+
+    last7.add(completedDays.contains(formatted));
+  }
+
+  return last7;
+}
+
+Future<List<HabitLog>> getAllLogsForHabit(int habitId) async {
+  return await _dbHelper.getHabitLogs(habitId);  
+}
+
 
 }
 

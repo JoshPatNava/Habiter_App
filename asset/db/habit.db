@@ -1,0 +1,63 @@
+
+DROP TABLE IF EXISTS habits;
+DROP TABLE IF EXISTS habit_logs;
+
+
+CREATE TABLE habits (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    description TEXT,
+    frequency INTEGER,
+    start_date TEXT,
+    goal_count INTEGER
+);
+
+CREATE TABLE habit_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    habit_id INTEGER,
+    date TEXT,
+    completed INTEGER
+);
+
+
+INSERT INTO habits (id, name, description, frequency, start_date, goal_count)
+VALUES
+(1, 'Read', 'Read 20 minutes daily', 1, '2025-01-01', NULL),
+(2, 'Workout', 'Exercise 3× per week', 2, '2025-01-01', 3),
+(3, 'Meditate', 'Daily mindfulness practice', 1, '2025-01-01', NULL);
+
+
+-- Helper: generate last 10 days for today's date (2025-01-10 assumed)
+-- Replace dates if running at another time
+
+-- Habit 1: Read (7/10 completions)
+INSERT INTO habit_logs (habit_id, date, completed) VALUES
+(1, '2025-01-01', 1),
+(1, '2025-01-02', 1),
+(1, '2025-01-03', 0),
+(1, '2025-01-04', 1),
+(1, '2025-01-05', 1),
+(1, '2025-01-06', 1),
+(1, '2025-01-07', 0),
+(1, '2025-01-08', 1),
+(1, '2025-01-09', 1),
+(1, '2025-01-10', 0);
+
+-- Habit 2: Workout (3× weekly habit)
+INSERT INTO habit_logs (habit_id, date, completed) VALUES
+(2, '2025-01-03', 1),
+(2, '2025-01-05', 1),
+(2, '2025-01-08', 1);
+
+-- Habit 3: Meditate (8/10 completions)
+INSERT INTO habit_logs (habit_id, date, completed) VALUES
+(3, '2025-01-01', 1),
+(3, '2025-01-02', 1),
+(3, '2025-01-03', 1),
+(3, '2025-01-04', 0),
+(3, '2025-01-05', 1),
+(3, '2025-01-06', 1),
+(3, '2025-01-07', 1),
+(3, '2025-01-08', 1),
+(3, '2025-01-09', 1),
+(3, '2025-01-10', 0);
