@@ -11,7 +11,7 @@ import '../models/habit.dart';
 import '../models/habit_log.dart';
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key}) : super(key: key);
+  const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();  

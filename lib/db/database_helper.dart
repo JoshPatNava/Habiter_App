@@ -24,11 +24,13 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'habit.db');
 
+    await deleteDatabase(path);
+
     final exists = await databaseExists(path);
 
     if (!exists) {
       try {
-        ByteData data = await rootBundle.load("asset/db/habit.db");
+        ByteData data = await rootBundle.load("assets/db/habit.db");
         List<int> bytes = data.buffer.asUint8List(
           data.offsetInBytes,
           data.lengthInBytes,

@@ -1,5 +1,5 @@
-name: namer_app
-description: "A new Flutter project."
+name: habiter_app
+description: "A Flutter application for habit tracking."
 publish_to: "none"
 version: 0.1.0
 
@@ -27,5 +27,5 @@ dev_dependencies:
 
 flutter:
   assets:
-    - asset/db/habit.db
+    - assets/db/habit.db
   uses-material-design: true

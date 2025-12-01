@@ -5,7 +5,7 @@ import '../controller/habit_controller.dart';
 import '../models/habit.dart';
 
 class StatPage extends StatefulWidget {
-  const StatPage({Key? key}) : super(key: key);
+  const StatPage({super.key});
 
   @override
   State<StatPage> createState() => _MyStatPageState();  
