@@ -139,7 +139,7 @@ Future<List<HabitLog>> getHabitLogs(int habitId, {String? forDay}) async {
         DateTime(logDate.year, logDate.month, logDate.day);
 
     if (prevDay != null) {
-      final diff = logDay.difference(prevDay!).inDays;
+      final diff = logDay.difference(prevDay).inDays;
 
       if (diff == 1) {
         current++;

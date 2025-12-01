@@ -24,8 +24,6 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'habit.db');
 
-    await deleteDatabase(path);
-
     final exists = await databaseExists(path);
 
     if (!exists) {
