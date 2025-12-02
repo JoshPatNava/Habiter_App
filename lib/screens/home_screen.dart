@@ -51,10 +51,8 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
         _loadAll(); 
-    });
-}
+  }
 
   DateTime _dateOnly(DateTime dt) => DateTime(dt.year, dt.month, dt.day);
 

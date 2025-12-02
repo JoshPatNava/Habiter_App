@@ -34,9 +34,7 @@ class _MyStatPageState extends State<StatPage> {
   @override
   void initState() {
     super.initState();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _loadHabits();
-    });
+      _loadHabits();
   }
 
   Future<void> _loadHabits() async {

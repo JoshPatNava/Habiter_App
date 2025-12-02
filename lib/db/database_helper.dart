@@ -12,11 +12,11 @@ class DatabaseHelper {
   factory DatabaseHelper() => _instance;
   DatabaseHelper.internal();
 
-  static Database? _database;
+  Database? _database;
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB();
+    _database ??= await _initDB();
     return _database!;
   }
 
@@ -35,16 +35,18 @@ class DatabaseHelper {
         );
 
         await File(path).writeAsBytes(bytes, flush: true);
+
       } catch (e) {
         print("Error copying preloaded DB. Falling back to onCreate(): $e");
+        return await openDatabase(
+        path,
+        version: 1,
+        onCreate: _createDB,
+        );
       }
     }
-
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: _createDB,
-    );
+    print("Preloaded database copied successfully.");
+    return await openDatabase(path);
   }
 
 
