@@ -22,7 +22,9 @@ Map<String, dynamic> toMap() {
       'name': name,
       'description': description,
       'frequency': frequency,
-      'start_date': startDate.toIso8601String(),
+      'start_date': "${startDate.year.toString().padLeft(4, '0')}-"
+                    "${startDate.month.toString().padLeft(2, '0')}-"
+                    "${startDate.day.toString().padLeft(2, '0')}",
       'goal_count': goalCount,
     };
   }
@@ -34,7 +36,7 @@ factory Habit.fromMap(Map<String, dynamic> map) {
       name: map['name'] as String,
       description: map['description'] as String?,
       frequency: map['frequency'] as int,
-      startDate: DateTime.parse(map['start_date'] as String),
+      startDate: _parseDate(map['start_date']),
       goalCount: map['goal_count'] == null
         ? null
         : (map['goal_count'] as num).toInt(),
@@ -58,4 +60,22 @@ factory Habit.fromMap(Map<String, dynamic> map) {
     goalCount: goalCount ?? this.goalCount,
   );
 }
+
+static DateTime _parseDate(dynamic raw) {
+  if (raw == null) return DateTime.now();
+
+  final s = raw.toString();
+
+  if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(s)) {
+    final parts = s.split('-');
+    return DateTime(
+      int.parse(parts[0]),
+      int.parse(parts[1]),
+      int.parse(parts[2]),
+    );
+  }
+
+  return DateTime.parse(s);
+}
+
 }

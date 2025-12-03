@@ -47,8 +47,17 @@ class _MyStatPageState extends State<StatPage> {
     
   Future<void> _loadHabitStats(Habit habit) async {
    setState(() {
-      _loadingStats = true;
-      _selectedHabit = habit;
+    _loadingStats = true;
+    _selectedHabit = habit;
+    _totalCompletions = null;
+    _currentStreak = null;
+    _bestStreak = null;
+    _completionRate = null;
+    _weeklyGoal = null;
+    _weeklyProgress = null;
+    _weeklyPercentage = null;
+    _last7Days = List<bool>.filled(7, false);
+    _lifetimeStats = {};
    });
 
     _totalCompletions =
@@ -118,7 +127,7 @@ Future<Map<String, String>> getLifetimeStats() async {
   final logs = await _habitController.getAllLogsForHabit(_selectedHabit!.id!);
   final completedLogs = logs.where((l) => l.completed).toList();
 
-  if (_totalCompletions == null || _totalCompletions == 0) {
+  if (completedLogs.isEmpty) {
     return {
       "Habit age": "$habitAgeDays days",
       "First completion": "No completions yet",
@@ -127,10 +136,11 @@ Future<Map<String, String>> getLifetimeStats() async {
     };
   }
 
-  completedLogs.sort((a, b) => a.date.compareTo(b.date));
+  completedLogs.sort((a, b) =>
+    DateTime.parse(a.date).compareTo(DateTime.parse(b.date)));
 
-  final firstDate = DateTime.parse(completedLogs.first.date);
-  final lastDate = DateTime.parse(completedLogs.last.date);
+  final firstDate = DateTime.parse(completedLogs.first.date.trim());
+  final lastDate = DateTime.parse(completedLogs.last.date.trim());
 
   String format(DateTime d) =>
       "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
@@ -276,6 +286,20 @@ Future<Map<String, String>> getLifetimeStats() async {
                                               ),
                                               const SizedBox(height: 20),
 
+                                              Text(
+                                                  "Last 7 Days",
+                                                  style: GoogleFonts.openSans(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                ),
+                                                ),
+                                                const SizedBox(height: 10),
+
+                                                _build7DayChart(),
+
+                                                const SizedBox(height: 20),   
+                                             
+
                                               if (_selectedHabit
                                                       ?.frequency ==
                                                   2) ...[
@@ -291,19 +315,6 @@ Future<Map<String, String>> getLifetimeStats() async {
                                                 const SizedBox(height: 10),
 
                                                 SizedBox(height: 20),
-
-                                                Text(
-                                                  "Last 7 Days",
-                                                  style: GoogleFonts.openSans(
-                                                    fontSize: 20,
-                                                    fontWeight: FontWeight.bold,
-                                                ),
-                                                ),
-                                                const SizedBox(height: 10),
-
-                                                _build7DayChart(),
-
-                                                const SizedBox(height: 20),   
 
                                                 _buildStatRow(
                                                     "Weekly goal:",
@@ -449,10 +460,15 @@ Future<Map<String, String>> getLifetimeStats() async {
   Widget _build7DayChart() {
   final labels = ["S", "M", "T", "W", "T", "F", "S"];
 
+  final data = _last7Days.length == 7
+      ? _last7Days
+      : List<bool>.filled(7, false);
+
+
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: List.generate(7, (i) {
-      final done = _last7Days[i];
+      final done = data[i];
 
       return Column(
         mainAxisAlignment: MainAxisAlignment.end,

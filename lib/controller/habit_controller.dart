@@ -32,7 +32,7 @@ class HabitController {
   }
 
   // get logs for specfied habit
-Future<List<HabitLog>> getHabitLogs(int habitId, {String? forDay}) async {
+Future<List<HabitLog>> getHabitLogs(int habitId, {String ? forDay}) async {
   if (forDay == null) {
     return await _dbHelper.getHabitLogs(habitId);
   }
@@ -78,7 +78,7 @@ Future<List<HabitLog>> getHabitLogs(int habitId, {String? forDay}) async {
 
     for (final h in habits) {
       if (h.id == null) continue;
-      final logs = await _dbHelper.getHabitLogs(h.id!, forDay: dayString);
+      final logs = await getHabitLogs(h.id!, forDay: dayString);
       result[h.id!] = logs.any((log) => log.completed);
     }
 
@@ -95,7 +95,7 @@ Future<List<HabitLog>> getHabitLogs(int habitId, {String? forDay}) async {
    final completedLogs = logs
       .where((l) => l.completed)
       .toList()
-    ..sort((a, b) => b.date.compareTo(a.date));
+    ..sort((a, b) => DateTime.parse(b.date).compareTo(DateTime.parse(a.date)));
 
    if (completedLogs.isEmpty) return 0;
 
@@ -124,7 +124,7 @@ Future<List<HabitLog>> getHabitLogs(int habitId, {String? forDay}) async {
    final completedLogs = logs
       .where((l) => l.completed)
       .toList()
-    ..sort((a, b) => a.date.compareTo(b.date));
+    ..sort((a, b) => DateTime.parse(a.date).compareTo(DateTime.parse(b.date)));
 
   if (completedLogs.isEmpty) return 0;
 
@@ -182,7 +182,8 @@ Future<List<HabitLog>> getHabitLogs(int habitId, {String? forDay}) async {
   final logs = await _dbHelper.getHabitLogs(habit.id!);
 
   final now = DateTime.now();
-  final weekStart = now.subtract(Duration(days: now.weekday % 7));
+  final today = DateTime(now.year, now.month, now.day);
+  final weekStart = today.subtract(Duration(days: today.weekday % 7));
   final weekEnd = weekStart.add(Duration(days: 6));
 
   final thisWeekLogs = logs.where((log) {
@@ -207,10 +208,11 @@ Future<List<bool>> getLast7DaysCompletion(int habitId) async {
 
   final completedDays = logs
       .where((l) => l.completed)
-      .map((l) => l.date)
+      .map((l) => l.date.trim())
       .toSet();
 
-  DateTime today = DateTime.now();
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
 
   List<bool> last7 = [];
 
