@@ -4,9 +4,9 @@ import 'screens/stat_page.dart';
 import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
 
-void main() {
-  
-  runApp(MyApp());
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -31,16 +31,18 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    });
     super.initState();
   }
 
   int _selectedIndex = 1;
 
   final List<Widget> _screens = [
-    StatPage(key: UniqueKey()),
-    MyHomePage(key: UniqueKey()),
-    SettingsPage(key: UniqueKey()),
+    StatPage(),
+    MyHomePage(),
+    SettingsPage(),
   ];
 
   @override

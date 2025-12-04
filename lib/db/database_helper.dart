@@ -38,15 +38,20 @@ class DatabaseHelper {
 
       } catch (e) {
         print("Error copying preloaded DB. Falling back to onCreate(): $e");
-        return await openDatabase(
+        final db = await openDatabase(
         path,
         version: 1,
         onCreate: _createDB,
         );
+        
+        await db.execute("PRAGMA foreign_keys = ON");
+        return db;
       }
     }
     print("Preloaded database copied successfully.");
-    return await openDatabase(path);
+    final db = await openDatabase(path);
+    await db.execute("PRAGMA foreign_keys = ON");
+    return db;
   }
 
 
@@ -101,11 +106,12 @@ class DatabaseHelper {
 
   // Add habit log & update if exists
   Future<int> upsertHabitLog(HabitLog log) async {
+    final cleanDate = log.date.trim();
     final db = await database;
     final existing = await db.query(
       'habit_logs',
       where: 'habit_id = ? AND date = ?',
-      whereArgs: [log.habitId, log.date],
+      whereArgs: [log.habitId, cleanDate],
     );
 
   
@@ -114,7 +120,7 @@ class DatabaseHelper {
         'habit_logs',
         log.toMap(),
         where: 'habit_id = ? AND date = ?',
-        whereArgs: [log.habitId, log.date],
+        whereArgs: [log.habitId, cleanDate],
       );
     }
     return await db.insert('habit_logs', log.toMap());
@@ -123,12 +129,12 @@ class DatabaseHelper {
   // Get logs for a habit
   Future<List<HabitLog>> getHabitLogs(int habitId, {String? forDay}) async {
   final db = await database;
-
-  if (forDay != null) {
+  final cleanDay = forDay?.trim();
+  if (cleanDay != null) {
     final rows = await db.query(
       'habit_logs',
       where: 'habit_id = ? AND date = ?',
-      whereArgs: [habitId, forDay],
+      whereArgs: [habitId, cleanDay],
       orderBy: 'date DESC',
     );
 
@@ -139,7 +145,7 @@ class DatabaseHelper {
     'habit_logs',
     where: 'habit_id = ?',
     whereArgs: [habitId],
-    orderBy: 'date DESC',
+    orderBy: "date DESC",
   );
 
   return rows.map((m) => HabitLog.fromMap(m)).toList();

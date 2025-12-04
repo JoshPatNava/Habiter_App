@@ -137,7 +137,7 @@ Future<Map<String, String>> getLifetimeStats() async {
   }
 
   completedLogs.sort((a, b) =>
-    DateTime.parse(a.date).compareTo(DateTime.parse(b.date)));
+    DateTime.parse(a.date.trim()).compareTo(DateTime.parse(b.date.trim())));
 
   final firstDate = DateTime.parse(completedLogs.first.date.trim());
   final lastDate = DateTime.parse(completedLogs.last.date.trim());
@@ -159,6 +159,12 @@ Future<Map<String, String>> getLifetimeStats() async {
     super.didUpdateWidget(oldWidget);
     _loadHabits(); 
     _showStatState = false;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadHabits();
   }
 
   @override

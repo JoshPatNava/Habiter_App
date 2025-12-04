@@ -15,7 +15,7 @@ class HabitLog {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'habit_Id': habitId,
+      'habit_id': habitId,
       'date': date,
       'completed': completed ? 1 : 0,
     };
@@ -25,7 +25,7 @@ class HabitLog {
   factory HabitLog.fromMap(Map<String, dynamic> map) => HabitLog(
       id: map['id'],
       habitId: map['habit_id'],
-      date: map['date'],
+      date: map['date'].toString().trim(),
       completed: map['completed'] == 1,
   );
 }

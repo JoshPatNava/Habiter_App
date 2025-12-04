@@ -39,7 +39,7 @@ factory Habit.fromMap(Map<String, dynamic> map) {
       startDate: _parseDate(map['start_date']),
       goalCount: map['goal_count'] == null
         ? null
-        : (map['goal_count'] as num).toInt(),
+        : int.tryParse(map['goal_count'].toString().trim()),
     );
   }
 
@@ -64,7 +64,7 @@ factory Habit.fromMap(Map<String, dynamic> map) {
 static DateTime _parseDate(dynamic raw) {
   if (raw == null) return DateTime.now();
 
-  final s = raw.toString();
+  final s = raw.toString().trim();
 
   if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(s)) {
     final parts = s.split('-');

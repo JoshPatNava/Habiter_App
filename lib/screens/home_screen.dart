@@ -72,7 +72,7 @@ class _MyHomePageState extends State<MyHomePage> {
         completionCountByHabit[habit.id!] =
           logs.where((log) => log.completed).length;
         for (final log in logs) {
-          final logDate = _dateOnly(DateTime.parse(log.date));
+          final logDate = _dateOnly(DateTime.parse(log.date.trim()));
           logsByDay.putIfAbsent(logDate, () => <HabitLog>[]).add(log);
         }
       }
@@ -270,13 +270,12 @@ List<HabitLog> _getEventsForDay(DateTime day) {
   }
 
   Future<void> _completeHabitToday(Habit habit) async {
-  final newLog = HabitLog(
-    habitId: habit.id!,
-    date: DateFormat('yyyy-MM-dd').format(DateTime.now()),
-    completed: true,
-  );
+   await controller.toggleCompletion(
+     habitId: habit.id!,
+     day: DateTime.now(),
+     completed: true,
+   );
 
-  await controller.addHabitLog(newLog);
   await _loadAll(); 
 }
 
@@ -384,7 +383,7 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  "Total logs: ${_completionCountByHabit[habit.id] ?? 0}",
+                                  "Total completions: ${_completionCountByHabit[habit.id] ?? 0}",
                                   style: GoogleFonts.openSans(fontSize: 16),
                                 ),
 
@@ -449,6 +448,7 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                             _showInfoState = false; 
                             _selectedDay = null;
                             _focusedDay = _today;
+                            _selectedDayLogs = [];
                             });
                       },
                       child: Center(
@@ -483,7 +483,7 @@ List<HabitLog> _getEventsForDay(DateTime day) {
       ? _selectedDayLogs.where((l) => l.completed).toList()
       : List<HabitLog>.from(_selectedDayLogs);
 
-    filtered.sort((a, b) => DateTime.parse(b.date).compareTo(DateTime.parse(a.date)));
+    filtered.sort((a, b) => DateTime.parse(b.date.trim()).compareTo(DateTime.parse(a.date.trim())));
 
      return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -542,7 +542,7 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                       style: GoogleFonts.openSans(fontSize: 15, fontWeight: FontWeight.w600),
                     ),
                     subtitle: Text(
-                      "Completed ",
+                      log.completed ? "Completed" : "Not completed",
                       style: GoogleFonts.openSans(fontSize: 13),
                     ),
                   );
@@ -557,6 +557,7 @@ List<HabitLog> _getEventsForDay(DateTime day) {
             setState(() {
               _showInfoState = false;
               _selectedDay = null;
+              _selectedDayLogs = [];
             });
           },
           child: const Text("Close"),

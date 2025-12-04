@@ -49,7 +49,7 @@ Future<List<HabitLog>> getHabitLogs(int habitId, {String ? forDay}) async {
 
   Future<bool> isCompletedOn(int habitId, DateTime day) async {
     final dayString = DateFormat('yyyy-MM-dd').format(day);
-    final logs = await _dbHelper.getHabitLogs(habitId, forDay: dayString);
+    final logs = await getHabitLogs(habitId, forDay: dayString);
     return logs.any((log) => log.completed);
   }
 
@@ -86,16 +86,16 @@ Future<List<HabitLog>> getHabitLogs(int habitId, {String ? forDay}) async {
   }
 
   Future<int> getTotalCompletions(int habitId) async {
-    final logs = await _dbHelper.getHabitLogs(habitId);
+    final logs = await getHabitLogs(habitId);
     return logs.where((log) => log.completed).length;
   }
 
   Future<int> getCurrentStreak(int habitId) async {
-    final logs = await _dbHelper.getHabitLogs(habitId);
+    final logs = await getHabitLogs(habitId);
    final completedLogs = logs
       .where((l) => l.completed)
       .toList()
-    ..sort((a, b) => DateTime.parse(b.date).compareTo(DateTime.parse(a.date)));
+    ..sort((a, b) => DateTime.parse(b.date.trim()).compareTo(DateTime.parse(a.date.trim())));
 
    if (completedLogs.isEmpty) return 0;
 
@@ -105,7 +105,7 @@ Future<List<HabitLog>> getHabitLogs(int habitId, {String ? forDay}) async {
       DateTime(today.year, today.month, today.day); 
 
   for (final log in completedLogs) {
-    final logDayDate = DateTime.parse(log.date);
+    final logDayDate = DateTime.parse(log.date.trim());
     final logDay =
         DateTime(logDayDate.year, logDayDate.month, logDayDate.day);
 
@@ -120,11 +120,11 @@ Future<List<HabitLog>> getHabitLogs(int habitId, {String ? forDay}) async {
   }
 
   Future<int> getBestStreak(int habitId) async {
-    final logs = await _dbHelper.getHabitLogs(habitId);
+    final logs = await getHabitLogs(habitId);
    final completedLogs = logs
       .where((l) => l.completed)
       .toList()
-    ..sort((a, b) => DateTime.parse(a.date).compareTo(DateTime.parse(b.date)));
+    ..sort((a, b) => DateTime.parse(a.date.trim()).compareTo(DateTime.parse(b.date.trim())));
 
   if (completedLogs.isEmpty) return 0;
 
@@ -134,7 +134,7 @@ Future<List<HabitLog>> getHabitLogs(int habitId, {String ? forDay}) async {
   DateTime? prevDay;
 
   for (final log in completedLogs) {
-    final logDate = DateTime.parse(log.date);
+    final logDate = DateTime.parse(log.date.trim());
     final logDay =
         DateTime(logDate.year, logDate.month, logDate.day);
 
@@ -158,7 +158,7 @@ Future<List<HabitLog>> getHabitLogs(int habitId, {String ? forDay}) async {
 
 
   Future<double> getCompletionRate(Habit habit) async {
-    final logs = await _dbHelper.getHabitLogs(habit.id!);
+    final logs = await getHabitLogs(habit.id!);
     final completedLogs = logs.where((l) => l.completed).length;
 
     final start = DateTime(
@@ -179,7 +179,7 @@ Future<List<HabitLog>> getHabitLogs(int habitId, {String ? forDay}) async {
     return { "goal": null, "progress": null, "percentage": null };
   }
 
-  final logs = await _dbHelper.getHabitLogs(habit.id!);
+  final logs = await getHabitLogs(habit.id!);
 
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
@@ -187,7 +187,7 @@ Future<List<HabitLog>> getHabitLogs(int habitId, {String ? forDay}) async {
   final weekEnd = weekStart.add(Duration(days: 6));
 
   final thisWeekLogs = logs.where((log) {
-    final dt = DateTime.parse(log.date);
+    final dt = DateTime.parse(log.date.trim());
     return dt.isAfter(weekStart.subtract(Duration(seconds: 1))) &&
            dt.isBefore(weekEnd.add(Duration(days: 1)));
   }).toList();
@@ -204,7 +204,7 @@ Future<List<HabitLog>> getHabitLogs(int habitId, {String ? forDay}) async {
 }
 
 Future<List<bool>> getLast7DaysCompletion(int habitId) async {
-  final logs = await _dbHelper.getHabitLogs(habitId);
+  final logs = await getHabitLogs(habitId);
 
   final completedDays = logs
       .where((l) => l.completed)
@@ -229,7 +229,7 @@ Future<List<bool>> getLast7DaysCompletion(int habitId) async {
 }
 
 Future<List<HabitLog>> getAllLogsForHabit(int habitId) async {
-  return await _dbHelper.getHabitLogs(habitId);  
+  return await getHabitLogs(habitId);  
 }
 
 
