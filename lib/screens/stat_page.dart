@@ -39,14 +39,19 @@ class _MyStatPageState extends State<StatPage> {
 
   Future<void> _loadHabits() async {
     final habits = await _habitController.getAllHabits();
+
+    if (!mounted) return;
+
     setState(() {
       _habits = habits;
       _loading = false;
     });
   }
     
-  Future<void> _loadHabitStats(Habit habit) async {
-   setState(() {
+ Future<void> _loadHabitStats(Habit habit) async {
+  if (!mounted) return;
+
+  setState(() {
     _loadingStats = true;
     _selectedHabit = habit;
     _totalCompletions = null;
@@ -58,37 +63,62 @@ class _MyStatPageState extends State<StatPage> {
     _weeklyPercentage = null;
     _last7Days = List<bool>.filled(7, false);
     _lifetimeStats = {};
-   });
+  });
 
-    _totalCompletions =
-        await _habitController.getTotalCompletions(habit.id!);
-    _currentStreak =
-        await _habitController.getCurrentStreak(habit.id!);
-    _bestStreak =
-        await _habitController.getBestStreak(habit.id!);
-    _last7Days =
-        await _habitController.getLast7DaysCompletion(habit.id!);
-    _completionRate = 
-        await _habitController.getCompletionRate(habit);
-    _lifetimeStats =
-        await getLifetimeStats();
+  try {
+    final results = await Future.wait([
+      _habitController.getTotalCompletions(habit.id!),
+      _habitController.getCurrentStreak(habit.id!),
+      _habitController.getBestStreak(habit.id!),
+      _habitController.getLast7DaysCompletion(habit.id!),
+      _habitController.getCompletionRate(habit),
+      getLifetimeStats(),
+      if (habit.frequency == 2)
+        _habitController.getWeeklyGoalProgress(habit)
+    ]);
+
+    int idx = 0;
+    final totalCompletions = results[idx++] as int;
+    final currentStreak = results[idx++] as int;
+    final bestStreak = results[idx++] as int;
+    final last7Days = results[idx++] as List<bool>;
+    final completionRate = results[idx++] as double;
+    final lifetimeStats = results[idx++] as Map<String, String>;
+
+    int? weeklyGoal;
+    int? weeklyProgress;
+    double? weeklyPercentage;
 
     if (habit.frequency == 2) {
-     final goal = await _habitController.getWeeklyGoalProgress(habit);
+      final goal = results[idx] as Map<String, dynamic>;
+      weeklyGoal = goal["goal"];
+      weeklyProgress = goal["progress"];
+      weeklyPercentage = goal["percentage"];
+    }
 
-     _weeklyGoal = goal["goal"];
-     _weeklyProgress = goal["progress"];
-      _weeklyPercentage = goal["percentage"];
-    } else {
-      _weeklyGoal = null;
-      _weeklyProgress = null;
-      _weeklyPercentage = null;
-  }
+    if (!mounted) return;
 
     setState(() {
+      _totalCompletions = totalCompletions;
+      _currentStreak = currentStreak;
+      _bestStreak = bestStreak;
+      _last7Days = last7Days;
+      _completionRate = completionRate;
+      _lifetimeStats = lifetimeStats;
+      _weeklyGoal = weeklyGoal;
+      _weeklyProgress = weeklyProgress;
+      _weeklyPercentage = weeklyPercentage;
       _loadingStats = false;
     });
+  } catch (e) {
+    if (!mounted) return;
+
+    setState(() => _loadingStats = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error loading stats: $e")));
   }
+}
+
 
   List<String> _getAchievements() {
   List<String> achievements = [];
@@ -135,12 +165,14 @@ Future<Map<String, String>> getLifetimeStats() async {
       "Days tracked": "$habitAgeDays days",
     };
   }
+  
+  completedLogs.sort(
+    (a, b) => parseDate(b.date).compareTo(parseDate(a.date)),
+  );
 
-  completedLogs.sort((a, b) =>
-    DateTime.parse(a.date.trim()).compareTo(DateTime.parse(b.date.trim())));
 
-  final firstDate = DateTime.parse(completedLogs.first.date.trim());
-  final lastDate = DateTime.parse(completedLogs.last.date.trim());
+  final firstDate = parseDate(completedLogs.first.date.trim());
+  final lastDate = parseDate(completedLogs.last.date.trim());
 
   String format(DateTime d) =>
       "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
@@ -351,25 +383,30 @@ Future<Map<String, String>> getLifetimeStats() async {
                                               SizedBox(height: 10),
 
                                               Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: _lifetimeStats.entries.map((entry) {
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: _lifetimeStats.entries.map((entry) {
                                                 return Padding(
-                                                  padding: const EdgeInsets.symmetric(vertical: 3),
-                                                  child: Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
                                                     children: [
                                                       Text(entry.key,
-                                                        style: GoogleFonts.openSans(fontSize: 16)),
-                                                      Text(entry.value,
+                                                        style: GoogleFonts.openSans(fontSize: 16),
+                                                      ),
+                                                      SizedBox(height: 2),
+                                                      Text(
+                                                        entry.value,
                                                         style: GoogleFonts.openSans(
                                                           fontSize: 16,
                                                           fontWeight: FontWeight.w600,
-                                                        )),
+                                                        ),
+                                                      ),
                                                     ],
                                                   ),
                                                 );
                                               }).toList(),
                                             ),
+
                                               Text(
                                                 "Achievements",
                                                 style: GoogleFonts.openSans(
@@ -426,6 +463,16 @@ Future<Map<String, String>> getLifetimeStats() async {
       ),
     );
   }
+
+  DateTime parseDate(String date) {
+  final p = date.split('-');
+  return DateTime(
+    int.parse(p[0]), 
+    int.parse(p[1]), 
+    int.parse(p[2]), 
+  );
+}
+
   Widget _buildStatRowString(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -39,11 +39,12 @@ class _MainScreenState extends State<MainScreen> {
 
   int _selectedIndex = 1;
 
-  final List<Widget> _screens = [
-    StatPage(),
-    MyHomePage(),
-    SettingsPage(),
-  ];
+List<Widget> get _screens => [
+  StatPage(key: UniqueKey()),
+  MyHomePage(key: UniqueKey()),
+  SettingsPage(key: UniqueKey()),
+];
+
 
   @override
   Widget build(BuildContext context) {

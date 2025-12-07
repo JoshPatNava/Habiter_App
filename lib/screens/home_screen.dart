@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:intl/intl.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
@@ -57,42 +56,52 @@ class _MyHomePageState extends State<MyHomePage> {
   DateTime _dateOnly(DateTime dt) => DateTime(dt.year, dt.month, dt.day);
 
   Future<void> _loadAll() async {
-    try {
-      final habits = await controller.getAllHabits();
-      final habitById = <int, Habit>{};
-      for(final h in habits) {
-        habitById[h.id!] = h;
-      }
+  try {
+    final habits = await controller.getAllHabits();
 
-      final logsByDay = <DateTime, List<HabitLog>>{};
-      final completionCountByHabit = <int, int>{};
+    final habitById = <int, Habit>{};
+    final logsByDay = <DateTime, List<HabitLog>>{};
+    final completionCount = <int, int>{};
 
-      for (final habit in habits) {
-        final logs = await controller.getHabitLogs(habit.id!);
-        completionCountByHabit[habit.id!] =
-          logs.where((log) => log.completed).length;
-        for (final log in logs) {
-          final logDate = _dateOnly(DateTime.parse(log.date.trim()));
-          logsByDay.putIfAbsent(logDate, () => <HabitLog>[]).add(log);
-        }
-      }
+    for (final h in habits) {
+      habitById[h.id!] = h;
 
-      setState(() {
-        _habits = habits;
-        _habitById = habitById;
-        _logsByDay = logsByDay;
-        _completionCountByHabit = completionCountByHabit;
-        _loading = false;
-      });
-    } catch(e) {
-      setState(() => _loading = false);
-       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load data: $e')),
+      final logs = await controller.getHabitLogs(h.id!);
+
+      completionCount[h.id!] =
+          logs.where((l) => l.completed).length;
+
+      for (final log in logs) {
+        final parts = log.date.split('-');
+        final normalized = DateTime(
+          int.parse(parts[0]),
+          int.parse(parts[1]),
+          int.parse(parts[2]),
         );
+
+        logsByDay.putIfAbsent(normalized, () => []).add(log);
       }
     }
+
+    if (!mounted) return; 
+
+    setState(() {
+      _habits = habits;
+      _habitById = habitById;
+      _logsByDay = logsByDay;
+      _completionCountByHabit = completionCount;
+      _loading = false;
+    });
+  } catch (e) {
+    if (!mounted) return;
+
+    setState(() => _loading = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to load data: $e')),
+    );
   }
+}
+
 
   Future<void> _submitHabit() async {
     if (_formKey.currentState!.saveAndValidate()) {
@@ -193,8 +202,9 @@ Widget _buildAddHabitForm() {
 
 
 List<HabitLog> _getEventsForDay(DateTime day) {
-    return _logsByDay[_dateOnly(day)] ?? const <HabitLog>[];
-  }
+  final list = _logsByDay[_dateOnly(day)] ?? [];
+  return list;
+}
 
   void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
     final logs = _getEventsForDay(selectedDay);
@@ -317,6 +327,8 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                           borderRadius: BorderRadius.circular(25),
                         ),
                         child: TableCalendar<HabitLog>(
+                          key: ValueKey(_habits.length + _completionCountByHabit.length),
+                          availableGestures: AvailableGestures.all,
                           locale: "en_US",
                           headerStyle: HeaderStyle(
                             titleCentered: true,
@@ -350,12 +362,36 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                               shape: BoxShape.circle,
                             ),
                           ),
+                          calendarBuilders: CalendarBuilders(
+                          markerBuilder: (context, date, events) {
+                            if (events.isEmpty) return null;
+
+                            return Align(
+                              alignment: Alignment.bottomCenter,
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 4), // adjust spacing
+                                child: Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.redAccent,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+
                           firstDay: DateTime.utc(_today.year - 1, 1, 1),
                           lastDay: DateTime.utc(_today.year + 1, 12, 31),
                           focusedDay: _focusedDay,
                           selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
                           eventLoader: _getEventsForDay,
                           onDaySelected: _onDaySelected,
+                          onPageChanged: (day) {
+                            _focusedDay = day;
+                          },
                         ),
                       ),
                     ),
@@ -386,8 +422,6 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                                   "Total completions: ${_completionCountByHabit[habit.id] ?? 0}",
                                   style: GoogleFonts.openSans(fontSize: 16),
                                 ),
-
-                                const Spacer(),
                                 
                                 ElevatedButton(
                                   onPressed: () => _completeHabitToday(habit),
@@ -443,13 +477,14 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                     ),
 
                     TapRegion(
-                      onTapOutside:(_) {
+                      onTapOutside:(_) async{
                         setState(() {
                             _showInfoState = false; 
                             _selectedDay = null;
                             _focusedDay = _today;
                             _selectedDayLogs = [];
                             });
+                            await _loadAll();
                       },
                       child: Center(
                         child: Container(
@@ -483,7 +518,12 @@ List<HabitLog> _getEventsForDay(DateTime day) {
       ? _selectedDayLogs.where((l) => l.completed).toList()
       : List<HabitLog>.from(_selectedDayLogs);
 
-    filtered.sort((a, b) => DateTime.parse(b.date.trim()).compareTo(DateTime.parse(a.date.trim())));
+      DateTime parseDate(String d) {
+        final p = d.split('-');
+        return DateTime(int.parse(p[0]), int.parse(p[1]), int.parse(p[2]));
+      }
+
+      filtered.sort((a, b) => parseDate(b.date).compareTo(parseDate(a.date)));
 
      return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -496,21 +536,9 @@ List<HabitLog> _getEventsForDay(DateTime day) {
               style: GoogleFonts.openSans(fontSize: 18, fontWeight: FontWeight.w700),
             ),
           ),
-          Row(
-            children: [
-              Text(
-                _completedOnly ? "Completed" : "All",
-                style: GoogleFonts.openSans(fontSize: 12),
-              ),
-              const SizedBox(width: 6),
-              Switch(
-                value: _completedOnly,
-                onChanged: (v) => setState(() => _completedOnly = v),
-              ),
-            ],
-          ),
         ],
       ),
+
       const SizedBox(height: 12),
 
       // List
