@@ -139,10 +139,24 @@ Widget _buildAddHabitForm() {
             FormBuilderTextField(
               name: 'HabitName',
               maxLength: 20,
+              style: Theme.of(context).textTheme.titleMedium,
+              cursorColor: Theme.of(context).colorScheme.outline,
               decoration: InputDecoration(
-                enabledBorder: OutlineInputBorder(borderSide: BorderSide(width: 2)),
-                focusedBorder: OutlineInputBorder(borderSide: BorderSide(width: 2)),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    width: 2, 
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  )
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    width: 2, 
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  )
+                ),
                 hintText: "Your Habit Name",
+                hintStyle: Theme.of(context).textTheme.titleMedium,
+                counterStyle: Theme.of(context).textTheme.labelMedium,
               ),
               validator: FormBuilderValidators.required(),
             ),
@@ -151,10 +165,24 @@ Widget _buildAddHabitForm() {
             FormBuilderTextField(
               name: 'HabitDesc',
               maxLength: 100,
+              style: Theme.of(context).textTheme.titleMedium,
+              cursorColor: Theme.of(context).colorScheme.outline,
               decoration: InputDecoration(
-                enabledBorder: OutlineInputBorder(borderSide: BorderSide(width: 2)),
-                focusedBorder: OutlineInputBorder(borderSide: BorderSide(width: 2)),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    width: 2,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  )
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    width: 2,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  )
+                ),
                 hintText: "Description...",
+                hintStyle: Theme.of(context).textTheme.titleMedium,
+                counterStyle: Theme.of(context).textTheme.labelMedium,
               ),
             ),
             const SizedBox(height: 30),
@@ -175,14 +203,14 @@ Widget _buildAddHabitForm() {
               visible: _weekdaysVisible,
               child: FormBuilderCheckboxGroup(
                 name: 'WeeklyFreq',
-                options: const [
-                  FormBuilderFieldOption(value: 1, child: Text('Su')),
-                  FormBuilderFieldOption(value: 2, child: Text('M')),
-                  FormBuilderFieldOption(value: 3, child: Text('Tu')),
-                  FormBuilderFieldOption(value: 4, child: Text('W')),
-                  FormBuilderFieldOption(value: 5, child: Text('Th')),
-                  FormBuilderFieldOption(value: 6, child: Text('F')),
-                  FormBuilderFieldOption(value: 7, child: Text('Sa')),
+                options: [
+                  FormBuilderFieldOption(value: 1, child: Text('Su', style: Theme.of(context).textTheme.labelLarge)),
+                  FormBuilderFieldOption(value: 2, child: Text('M', style: Theme.of(context).textTheme.labelLarge)),
+                  FormBuilderFieldOption(value: 3, child: Text('Tu', style: Theme.of(context).textTheme.labelLarge)),
+                  FormBuilderFieldOption(value: 4, child: Text('W', style: Theme.of(context).textTheme.labelLarge)),
+                  FormBuilderFieldOption(value: 5, child: Text('Th', style: Theme.of(context).textTheme.labelLarge)),
+                  FormBuilderFieldOption(value: 6, child: Text('F', style: Theme.of(context).textTheme.labelLarge)),
+                  FormBuilderFieldOption(value: 7, child: Text('Sa', style: Theme.of(context).textTheme.labelLarge)),
                 ],
               ),
             ),
@@ -194,7 +222,10 @@ Widget _buildAddHabitForm() {
                 _submitHabit;
                 FocusScope.of(context).unfocus();
               },
-              child: const Text('Submit'),
+              child: Text(
+                'Submit', 
+                style: Theme.of(context).textTheme.labelLarge!.copyWith(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+              ),
             ),
           ],
         ),
@@ -270,6 +301,7 @@ List<HabitLog> _getEventsForDay(DateTime day) {
             decoration: InputDecoration(
               labelText: "Habit name",
               labelStyle: Theme.of(context).textTheme.titleMedium!.copyWith(fontSize: 17),
+              counterStyle: Theme.of(context).textTheme.labelMedium,
             ),
           ),
           actions: [
@@ -598,7 +630,10 @@ List<HabitLog> _getEventsForDay(DateTime day) {
               )
             : ListView.separated(
                 itemCount: filtered.length,
-                separatorBuilder: (_, __) => const Divider(height: 16),
+                separatorBuilder: (_, __) => Divider(
+                  height: 16, 
+                  color: Theme.of(context).colorScheme.outline,
+                ),
                 itemBuilder: (context, i) {
                   final log = filtered[i];
                   final habit = _habitById[log.habitId];
