@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'screens/stat_page.dart';
-import 'screens/home_screen.dart';
-import 'screens/settings_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:habiter_app/provider/theme.dart';
+import 'package:habiter_app/screens/stat_page.dart';
+import 'package:habiter_app/screens/home_screen.dart';
+import 'package:habiter_app/screens/settings_screen.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
+  runApp( 
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -14,8 +21,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: themeProvider.currentTheme,
       home: MainScreen(),
     );
   }
@@ -54,8 +63,6 @@ List<Widget> get _screens => [
         children: _screens,
       ),
       bottomNavigationBar: BottomAppBar(
-        color: Color(0xffffdada),
-        shape: const CircularNotchedRectangle(),
         notchMargin: 5.0,
         clipBehavior: Clip.hardEdge,
         child: SizedBox(
@@ -65,7 +72,6 @@ List<Widget> get _screens => [
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: <Widget>[
               IconButton(
-                color: Color(0xff2d336b),
                 iconSize: 50,
                 padding: EdgeInsets.all(0),
                 icon: const Icon(Icons.list_alt_outlined),
@@ -74,7 +80,6 @@ List<Widget> get _screens => [
                 },
               ),
               IconButton(
-                color: Color(0xff2d336b),
                 iconSize: 50,
                 padding: EdgeInsets.all(0),
                 icon: const Icon(Icons.home),
@@ -83,7 +88,6 @@ List<Widget> get _screens => [
                 },
               ),
               IconButton(
-                color: Color(0xff2d336b),
                 iconSize: 50,
                 padding: EdgeInsets.all(0),
                 icon: const Icon(Icons.settings),

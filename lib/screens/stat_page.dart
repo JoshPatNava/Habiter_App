@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../controller/habit_controller.dart';
 import '../models/habit.dart';
@@ -202,7 +201,7 @@ Future<Map<String, String>> getLifetimeStats() async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xff7886c7),
+      backgroundColor: Theme.of(context).colorScheme.surface,
 
         body: Center(
           child: _loading ? const CircularProgressIndicator() 
@@ -229,14 +228,13 @@ Future<Map<String, String>> getLifetimeStats() async {
                     child: Container(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Color(0xfffff2f2),
+                        color: Theme.of(context).colorScheme.surfaceContainer,
                       ),
                       child: Center(
                         child: Text(
                           _habits[index].name,
-                          style: GoogleFonts.openSans(
-                            fontSize: 30,
-                          ),
+                          style: Theme.of(context).textTheme.headlineMedium,
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     ),
@@ -273,7 +271,7 @@ Future<Map<String, String>> getLifetimeStats() async {
                                   width: 300,
                                   padding: const EdgeInsets.all(20),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.surfaceContainer,
                                     borderRadius: BorderRadius.circular(15),
                                   ),
                                   child: _loadingStats
@@ -289,9 +287,8 @@ Future<Map<String, String>> getLifetimeStats() async {
                                                 _selectedHabit?.name ??
                                                     "",
                                                 style:
-                                                    GoogleFonts.openSans(
-                                                  fontSize: 28,
-                                                  fontWeight:
+                                                    Theme.of(context).textTheme.headlineMedium!.copyWith(
+                                                  fontWeight: 
                                                       FontWeight.bold,
                                                 ),
                                                 textAlign: TextAlign.center,
@@ -326,8 +323,7 @@ Future<Map<String, String>> getLifetimeStats() async {
 
                                               Text(
                                                   "Last 7 Days",
-                                                  style: GoogleFonts.openSans(
-                                                    fontSize: 20,
+                                                  style: Theme.of(context).textTheme.titleLarge!.copyWith(
                                                     fontWeight: FontWeight.bold,
                                                 ),
                                                 ),
@@ -343,12 +339,10 @@ Future<Map<String, String>> getLifetimeStats() async {
                                                   2) ...[
                                                 Text(
                                                   "Weekly Goals",
-                                                  style: GoogleFonts
-                                                      .openSans(
-                                                    fontSize: 20,
-                                                    fontWeight:
+                                                  style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                                                    fontWeight: 
                                                         FontWeight.bold,
-                                                  ),
+                                                ),
                                                 ),
                                                 const SizedBox(height: 10),
 
@@ -375,9 +369,8 @@ Future<Map<String, String>> getLifetimeStats() async {
                                               SizedBox(height: 20),
                                               Text(
                                                 "Lifetime Stats",
-                                                style: GoogleFonts.openSans(
-                                                  fontSize: 20,
-                                                  fontWeight: FontWeight.bold,
+                                                style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                                                    fontWeight: FontWeight.bold,
                                                 ),
                                               ),
                                               SizedBox(height: 10),
@@ -391,15 +384,11 @@ Future<Map<String, String>> getLifetimeStats() async {
                                                     crossAxisAlignment: CrossAxisAlignment.start,
                                                     children: [
                                                       Text(entry.key,
-                                                        style: GoogleFonts.openSans(fontSize: 16),
+                                                        style: Theme.of(context).textTheme.titleMedium,
                                                       ),
                                                       SizedBox(height: 2),
-                                                      Text(
-                                                        entry.value,
-                                                        style: GoogleFonts.openSans(
-                                                          fontSize: 16,
-                                                          fontWeight: FontWeight.w600,
-                                                        ),
+                                                      Text(entry.value,
+                                                        style: Theme.of(context).textTheme.titleMedium,
                                                       ),
                                                     ],
                                                   ),
@@ -409,9 +398,8 @@ Future<Map<String, String>> getLifetimeStats() async {
 
                                               Text(
                                                 "Achievements",
-                                                style: GoogleFonts.openSans(
-                                                  fontSize: 20,
-                                                  fontWeight: FontWeight.bold,
+                                                style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                                                    fontWeight: FontWeight.bold,
                                                 ),
                                               ),
                                               SizedBox(height: 10),
@@ -423,10 +411,7 @@ Future<Map<String, String>> getLifetimeStats() async {
                                                   padding: const EdgeInsets.symmetric(vertical: 4),
                                                   child: Text(
                                                     a,
-                                                    style: GoogleFonts.openSans(
-                                                      fontSize: 16,
-                                                      fontWeight: FontWeight.w600,
-                                                    ),
+                                                    style: Theme.of(context).textTheme.titleMedium,
                                                   ),
                                                 );
                                               }).toList(),
@@ -442,7 +427,10 @@ Future<Map<String, String>> getLifetimeStats() async {
                                                           false;
                                                     });
                                                   },
-                                                  child: const Text("Close"),
+                                                  child: Text(
+                                                    "Close",
+                                                    style: Theme.of(context).textTheme.labelLarge!.copyWith(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                                                  ),
                                                 ),
                                               ),
 
@@ -479,12 +467,11 @@ Future<Map<String, String>> getLifetimeStats() async {
       children: [
         Text(
           label,
-          style: GoogleFonts.openSans(fontSize: 16),
+          style: Theme.of(context).textTheme.titleMedium,
         ),
         Text(
           value,
-          style: GoogleFonts.openSans(
-            fontSize: 22,
+          style: Theme.of(context).textTheme.titleLarge!.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -497,12 +484,11 @@ Future<Map<String, String>> getLifetimeStats() async {
       children: [
         Text(
           label,
-          style: GoogleFonts.openSans(fontSize: 16),
+          style: Theme.of(context).textTheme.titleMedium,
         ),
         Text(
           value?.toString() ?? "--",
-          style: GoogleFonts.openSans(
-            fontSize: 22,
+          style: Theme.of(context).textTheme.titleLarge!.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -538,10 +524,7 @@ Future<Map<String, String>> getLifetimeStats() async {
           SizedBox(height: 6),
           Text(
             labels[i],
-            style: GoogleFonts.openSans(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
+            style: Theme.of(context).textTheme.labelLarge,
           ),
         ],
       );

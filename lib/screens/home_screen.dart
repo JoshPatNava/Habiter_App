@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-
 import '../controller/habit_controller.dart';
 import '../models/habit.dart';
 import '../models/habit_log.dart';
@@ -24,6 +22,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final PanelController _panelController = PanelController();
   final GlobalKey<FormBuilderState> _formKey = GlobalKey<FormBuilderState>();
   bool _weekdaysVisible = false;
+  bool _panelUp = false;
 
   List<DropdownMenuItem<int>> get frequencies {
     return [
@@ -139,7 +138,7 @@ Widget _buildAddHabitForm() {
           children: [
             FormBuilderTextField(
               name: 'HabitName',
-              maxLength: 30,
+              maxLength: 20,
               decoration: InputDecoration(
                 enabledBorder: OutlineInputBorder(borderSide: BorderSide(width: 2)),
                 focusedBorder: OutlineInputBorder(borderSide: BorderSide(width: 2)),
@@ -191,7 +190,10 @@ Widget _buildAddHabitForm() {
             const SizedBox(height: 30),
 
             ElevatedButton(
-              onPressed: _submitHabit,
+              onPressed: () {
+                _submitHabit;
+                FocusScope.of(context).unfocus();
+              },
               child: const Text('Submit'),
             ),
           ],
@@ -222,20 +224,28 @@ List<HabitLog> _getEventsForDay(DateTime day) {
       context: parentContext,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text("Delete Habit"),
-          content: Text("Are you sure you want to delete the habit \"${habit.name}\"? This action cannot be undone."),
+          title: Text("Delete Habit", style: Theme.of(context).textTheme.titleLarge),
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+          content: Text(
+            "Are you sure you want to delete the habit \"${habit.name}\"? This action cannot be undone.",
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text("Cancel"),
+              child: Text("Cancel", style: Theme.of(context).textTheme.labelLarge),
             ),
             TextButton(
+              style: TextButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest),
               onPressed: () async {
                 Navigator.of(dialogContext).pop(); // Close dialog
                 await controller.deleteHabit(habit.id!);
                 await _loadAll(); // Refresh data
               },
-              child: const Text("Delete", style: TextStyle(color: Colors.redAccent)),
+              child: Text(
+                "Delete",
+                style: Theme.of(context).textTheme.labelLarge!.copyWith(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+              ),
             ),
           ],
         );
@@ -251,17 +261,27 @@ List<HabitLog> _getEventsForDay(DateTime day) {
       context: parentContext,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text("Edit Habit"),
+          title: Text("Edit Habit", style: Theme.of(context).textTheme.titleLarge),
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
           content: TextField(
+            style: Theme.of(context).textTheme.titleMedium!.copyWith(fontSize: 19),
             controller: nameCtrl,
-            decoration: InputDecoration(labelText: "Habit name"),
+            maxLength: 20,
+            decoration: InputDecoration(
+              labelText: "Habit name",
+              labelStyle: Theme.of(context).textTheme.titleMedium!.copyWith(fontSize: 17),
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: Text("Cancel"),
+              child: Text(
+                "Cancel",
+                style: Theme.of(context).textTheme.labelLarge!.copyWith(color: Theme.of(context).colorScheme.onPrimary),
+              ),
             ),
             TextButton(
+              style: TextButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh),
               onPressed: () async {
                 final newName = nameCtrl.text.trim();
                 if (newName.isNotEmpty) {
@@ -271,7 +291,10 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                 }
                 Navigator.pop(dialogContext);
               },
-              child: Text("Save"),
+              child: Text(
+                "Save",
+                style: Theme.of(context).textTheme.labelLarge!.copyWith(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+              ),
             ),
           ],
         );
@@ -293,20 +316,42 @@ List<HabitLog> _getEventsForDay(DateTime day) {
   Widget build(BuildContext context) {
 
   return Scaffold(
-    backgroundColor: const Color(0xff7886c7),
-    floatingActionButton: FloatingActionButton(
-      child: Icon(Icons.add, color: Colors.white),
-      backgroundColor: Colors.redAccent,
-      onPressed: () {
-        _panelController.open();
-      },
+    floatingActionButton: IgnorePointer(
+      ignoring: _panelUp,
+      child: AnimatedOpacity(
+        opacity: _panelUp ? 0.0 : 1.0,
+        duration: Durations.medium1,
+        child: FloatingActionButton(
+          onPressed: () {
+            _panelController.open();
+          },
+          child: Icon(Icons.add),
+        ),
+      ),
     ),
     body: SlidingUpPanel(
         controller: _panelController,
         minHeight: 0,
-        maxHeight: MediaQuery.of(context).size.height * 0.8,
-        color: Color(0xfffff2f2),
+        maxHeight: MediaQuery.of(context).size.height * 0.75,
+        color: Theme.of(context).colorScheme.tertiary,
         borderRadius: BorderRadius.vertical(top: Radius.circular(50)),
+        backdropEnabled: true,
+        onPanelClosed: () => _formKey.currentState?.reset(),
+        onPanelSlide: (position) {
+          FocusScope.of(context).unfocus();
+          if (_panelUp && position < 0.5) {
+            setState(() {
+              _panelUp = false;
+            });
+            return;
+          }
+          if (!_panelUp && position > 0.5) {
+            setState(() {
+              _panelUp = true;
+            });
+            return;
+          }
+        },
 
         panel: _buildAddHabitForm(),
 
@@ -317,13 +362,13 @@ List<HabitLog> _getEventsForDay(DateTime day) {
               IgnorePointer(
                 ignoring: _showInfoState,
                 child: ListView(
-                  padding: EdgeInsets.zero,
+                  padding: EdgeInsets.only(bottom: 100),
                   children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+                      padding: const EdgeInsets.only(top: 70, bottom: 30, left: 20, right: 20),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.surfaceContainer,
                           borderRadius: BorderRadius.circular(25),
                         ),
                         child: TableCalendar<HabitLog>(
@@ -334,33 +379,37 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                             titleCentered: true,
                             formatButtonVisible: false,
                             headerMargin: const EdgeInsets.only(bottom: 10),
-                            decoration: const BoxDecoration(
-                              color: Colors.redAccent,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.secondary,
                               borderRadius: BorderRadius.vertical(
                                 top: Radius.circular(25),
                               ),
                             ),
-                            titleTextStyle: GoogleFonts.openSans(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            titleTextStyle: Theme.of(context).textTheme.titleLarge!.copyWith(color: Theme.of(context).colorScheme.onSecondary),
                           ),
                           calendarStyle: CalendarStyle(
-                            markerDecoration: const BoxDecoration(
-                              color: Colors.redAccent,
+                            markerDecoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.secondary,
                               shape: BoxShape.circle,
+                            ),
+                            defaultTextStyle: Theme.of(context).textTheme.labelLarge!,
+                            weekendTextStyle: Theme.of(context).textTheme.labelLarge!.copyWith(
+                              color: Theme.of(context).textTheme.labelLarge!.color!.withAlpha(128),
                             ),
                             markersAlignment: Alignment.bottomCenter,
                             markersMaxCount: 3,
                             todayDecoration: BoxDecoration(
-                              color: Colors.redAccent.withOpacity(0.15),
+                              color: Theme.of(context).colorScheme.secondary,
                               shape: BoxShape.circle,
                             ),
-                            selectedDecoration: const BoxDecoration(
-                              color: Colors.redAccent,
+                            selectedDecoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.secondary,
                               shape: BoxShape.circle,
                             ),
+                          ),
+                          daysOfWeekStyle: DaysOfWeekStyle(
+                            weekendStyle: Theme.of(context).textTheme.labelLarge!,
+                            weekdayStyle: Theme.of(context).textTheme.labelLarge!,
                           ),
                           calendarBuilders: CalendarBuilders(
                           markerBuilder: (context, date, events) {
@@ -373,8 +422,8 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                                 child: Container(
                                   width: 6,
                                   height: 6,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.redAccent,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.secondary,
                                     shape: BoxShape.circle,
                                   ),
                                 ),
@@ -402,7 +451,7 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                         child: Container(
                           height: 200,
                           decoration: BoxDecoration(
-                            color: const Color(0xfffff2f2),
+                            color: Theme.of(context).colorScheme.surfaceContainer,
                             borderRadius: BorderRadius.circular(25),
                           ),
                           child: Padding(
@@ -412,29 +461,26 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                               children: [
                                 Text(
                                   habit.name,
-                                  style: GoogleFonts.openSans(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                  style: Theme.of(context).textTheme.titleLarge,
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
                                   "Total completions: ${_completionCountByHabit[habit.id] ?? 0}",
-                                  style: GoogleFonts.openSans(fontSize: 16),
+                                  style: Theme.of(context).textTheme.titleMedium,
                                 ),
                                 
                                 ElevatedButton(
                                   onPressed: () => _completeHabitToday(habit),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green,
+                                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                                     minimumSize: const Size(double.infinity, 40),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     "Complete Today",
-                                    style: TextStyle(color: Colors.white),
+                                    style: Theme.of(context).textTheme.labelLarge!.copyWith(color: Theme.of(context).colorScheme.surfaceContainerHighest),
                                   ),
                                 ),
 
@@ -444,11 +490,11 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
                                     IconButton(
-                                      icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                                      icon: Icon(Icons.edit, color: Theme.of(context).colorScheme.surfaceContainerLow),
                                       onPressed: () => _showEditHabitDialog(habit),
                                     ),
                                     IconButton(
-                                      icon: const Icon(Icons.delete, color: Colors.redAccent),
+                                      icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.surfaceContainerLowest),
                                       onPressed: () => _confirmDeleteHabit(habit),
                                     ),
                                   ],
@@ -491,7 +537,7 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                           height: 450,
                           width: 320,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.primary,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           padding: const EdgeInsets.all(16),
@@ -533,7 +579,7 @@ List<HabitLog> _getEventsForDay(DateTime day) {
           Expanded(
             child: Text(
               "Habit Data — $friendlyDate",
-              style: GoogleFonts.openSans(fontSize: 18, fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
           ),
         ],
@@ -547,7 +593,7 @@ List<HabitLog> _getEventsForDay(DateTime day) {
             ? Center(
                 child: Text(
                   _completedOnly ? "No completed logs for this day" : "No logs for this day",
-                  style: GoogleFonts.openSans(fontSize: 15),
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
               )
             : ListView.separated(
@@ -563,15 +609,15 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                     contentPadding: EdgeInsets.zero,
                     leading: Icon(
                       log.completed ? Icons.check_circle : Icons.radio_button_unchecked,
-                      color: log.completed ? Colors.green : Colors.grey,
+                      color: log.completed ? Theme.of(context).colorScheme.surfaceContainerHigh : Colors.grey,
                     ),
                     title: Text(
                       name,
-                      style: GoogleFonts.openSans(fontSize: 15, fontWeight: FontWeight.w600),
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
                     subtitle: Text(
                       log.completed ? "Completed" : "Not completed",
-                      style: GoogleFonts.openSans(fontSize: 13),
+                      style: Theme.of(context).textTheme.labelLarge,
                     ),
                   );
                 },
