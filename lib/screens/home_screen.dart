@@ -220,7 +220,7 @@ Widget _buildAddHabitForm() {
 
             ElevatedButton(
               onPressed: () {
-                _submitHabit;
+                _submitHabit();
                 FocusScope.of(context).unfocus();
               },
               child: Text(

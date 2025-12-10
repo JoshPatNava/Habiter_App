@@ -166,7 +166,7 @@ Future<Map<String, String>> getLifetimeStats() async {
   }
   
   completedLogs.sort(
-    (a, b) => parseDate(b.date).compareTo(parseDate(a.date)),
+    (a, b) => parseDate(a.date).compareTo(parseDate(b.date)),
   );
 
 
