@@ -190,6 +190,7 @@ Widget _buildAddHabitForm() {
             FormBuilderDropdown<int>(
               name: 'HabitFreq',
               items: frequencies,
+              dropdownColor: Theme.of(context).colorScheme.tertiary,
               initialValue: 1,
               onChanged: (value) {
                 setState(() {
@@ -298,6 +299,7 @@ List<HabitLog> _getEventsForDay(DateTime day) {
             style: Theme.of(context).textTheme.titleMedium!.copyWith(fontSize: 19),
             controller: nameCtrl,
             maxLength: 20,
+            cursorColor: Theme.of(context).colorScheme.outline,
             decoration: InputDecoration(
               labelText: "Habit name",
               labelStyle: Theme.of(context).textTheme.titleMedium!.copyWith(fontSize: 17),
