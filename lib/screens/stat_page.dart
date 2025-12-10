@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:intl/intl.dart';
 import '../controller/habit_controller.dart';
 import '../models/habit.dart';
 
@@ -27,6 +27,7 @@ class _MyStatPageState extends State<StatPage> {
   double? _weeklyPercentage;
   List<bool> _last7Days = [];
   Map<String, String> _lifetimeStats = {};
+  DateTime now = DateTime.now();
 
 
 
@@ -150,7 +151,6 @@ Future<Map<String, String>> getLifetimeStats() async {
   }
 
   DateTime start = _selectedHabit!.startDate;
-  DateTime now = DateTime.now();
   int habitAgeDays = now.difference(start).inDays + 1;
 
   final logs = await _habitController.getAllLogsForHabit(_selectedHabit!.id!);
@@ -497,7 +497,15 @@ Future<Map<String, String>> getLifetimeStats() async {
   }
 
   Widget _build7DayChart() {
-  final labels = ["S", "M", "T", "W", "T", "F", "S"];
+  final labels = [
+    DateFormat('MMM\n d').format(now.subtract(const Duration(days: 6))), 
+    DateFormat('MMM\n d').format(now.subtract(const Duration(days: 5))),
+    DateFormat('MMM\n d').format(now.subtract(const Duration(days: 4))),
+    DateFormat('MMM\n d').format(now.subtract(const Duration(days: 3))),
+    DateFormat('MMM\n d').format(now.subtract(const Duration(days: 2))),
+    DateFormat('MMM\n d').format(now.subtract(const Duration(days: 1))), 
+    DateFormat('MMM\n d').format(now),
+  ];
 
   final data = _last7Days.length == 7
       ? _last7Days
@@ -525,6 +533,7 @@ Future<Map<String, String>> getLifetimeStats() async {
           Text(
             labels[i],
             style: Theme.of(context).textTheme.labelLarge,
+            textAlign: TextAlign.center,
           ),
         ],
       );

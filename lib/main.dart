@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:habiter_app/provider/theme.dart';
 import 'package:habiter_app/screens/stat_page.dart';
 import 'package:habiter_app/screens/home_screen.dart';
 import 'package:habiter_app/screens/settings_screen.dart';
 
 void main() async{
-  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   runApp( 
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),
@@ -44,15 +46,17 @@ class _MainScreenState extends State<MainScreen> {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     });
     super.initState();
+    
+    FlutterNativeSplash.remove();
   }
 
   int _selectedIndex = 1;
 
-List<Widget> get _screens => [
-  StatPage(key: UniqueKey()),
-  MyHomePage(key: UniqueKey()),
-  SettingsPage(key: UniqueKey()),
-];
+  List<Widget> get _screens => [
+    StatPage(key: UniqueKey()),
+    MyHomePage(key: UniqueKey()),
+    SettingsPage(key: UniqueKey()),
+  ];
 
 
   @override

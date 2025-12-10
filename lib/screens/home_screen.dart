@@ -120,7 +120,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Habit Added!")),
+          SnackBar(content: Text("Habit Added!", style: Theme.of(context).textTheme.labelLarge)),
         );
       }
 
@@ -155,7 +155,9 @@ Widget _buildAddHabitForm() {
                   )
                 ),
                 hintText: "Your Habit Name",
-                hintStyle: Theme.of(context).textTheme.titleMedium,
+                hintStyle: Theme.of(context).textTheme.titleMedium!.copyWith(
+                  color: Theme.of(context).textTheme.titleMedium!.color!.withAlpha(128)
+                ),
                 counterStyle: Theme.of(context).textTheme.labelMedium,
               ),
               validator: FormBuilderValidators.required(),
@@ -181,7 +183,9 @@ Widget _buildAddHabitForm() {
                   )
                 ),
                 hintText: "Description...",
-                hintStyle: Theme.of(context).textTheme.titleMedium,
+                hintStyle: Theme.of(context).textTheme.titleMedium!.copyWith(
+                  color: Theme.of(context).textTheme.titleMedium!.color!.withAlpha(128)
+                ),
                 counterStyle: Theme.of(context).textTheme.labelMedium,
               ),
             ),
@@ -288,6 +292,8 @@ List<HabitLog> _getEventsForDay(DateTime day) {
   void _showEditHabitDialog(Habit habit) {
     final TextEditingController nameCtrl =
         TextEditingController(text: habit.name);
+    final TextEditingController descCtrl =
+        TextEditingController(text: habit.description);
     final parentContext = context;
     showDialog(
       context: parentContext,
@@ -295,16 +301,38 @@ List<HabitLog> _getEventsForDay(DateTime day) {
         return AlertDialog(
           title: Text("Edit Habit", style: Theme.of(context).textTheme.titleLarge),
           backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-          content: TextField(
-            style: Theme.of(context).textTheme.titleMedium!.copyWith(fontSize: 19),
-            controller: nameCtrl,
-            maxLength: 20,
-            cursorColor: Theme.of(context).colorScheme.outline,
-            decoration: InputDecoration(
-              labelText: "Habit name",
-              labelStyle: Theme.of(context).textTheme.titleMedium!.copyWith(fontSize: 17),
-              counterStyle: Theme.of(context).textTheme.labelMedium,
-            ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                style: Theme.of(context).textTheme.titleMedium!.copyWith(fontSize: 19),
+                controller: nameCtrl,
+                maxLength: 20,
+                cursorColor: Theme.of(context).colorScheme.outline,
+                decoration: InputDecoration(
+                  labelText: "Habit name",
+                  labelStyle: Theme.of(context).textTheme.titleMedium!.copyWith(
+                    fontSize: 17, 
+                    color: Theme.of(context).textTheme.titleMedium!.color!.withAlpha(128)
+                  ),
+                  counterStyle: Theme.of(context).textTheme.labelMedium,
+                ),
+              ),
+              TextField(
+                style: Theme.of(context).textTheme.titleMedium!.copyWith(fontSize: 19),
+                controller: descCtrl,
+                maxLength: 100,
+                cursorColor: Theme.of(context).colorScheme.outline,
+                decoration: InputDecoration(
+                  labelText: "Habit description",
+                  labelStyle: Theme.of(context).textTheme.titleMedium!.copyWith(
+                    fontSize: 17, 
+                    color: Theme.of(context).textTheme.titleMedium!.color!.withAlpha(128)
+                  ),
+                  counterStyle: Theme.of(context).textTheme.labelMedium,
+                ),
+              ),
+            ],
           ),
           actions: [
             TextButton(
@@ -318,8 +346,12 @@ List<HabitLog> _getEventsForDay(DateTime day) {
               style: TextButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh),
               onPressed: () async {
                 final newName = nameCtrl.text.trim();
-                if (newName.isNotEmpty) {
-                  final updated = habit.copyWith(name: newName);
+                final newDesc = descCtrl.text.trim();
+                if (newName.isNotEmpty || newDesc != habit.description) {
+                  final updated = habit.copyWith(
+                    name: newName.isNotEmpty ? newName : habit.name,
+                    description: newDesc,
+                  );
                   await controller.updateHabit(updated);
                   await _loadAll();
                 }
@@ -483,7 +515,6 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 30),
                         child: Container(
-                          height: 200,
                           decoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.surfaceContainer,
                             borderRadius: BorderRadius.circular(25),
@@ -497,12 +528,17 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                                   habit.name,
                                   style: Theme.of(context).textTheme.titleLarge,
                                 ),
+                                const SizedBox(height: 5),
+                                if (habit.description != null) Text(
+                                  "${habit.description}",
+                                  style: Theme.of(context).textTheme.labelLarge,
+                                ),
                                 const SizedBox(height: 8),
                                 Text(
                                   "Total completions: ${_completionCountByHabit[habit.id] ?? 0}",
                                   style: Theme.of(context).textTheme.titleMedium,
                                 ),
-                                
+
                                 ElevatedButton(
                                   onPressed: () => _completeHabitToday(habit),
                                   style: ElevatedButton.styleFrom(
@@ -517,8 +553,6 @@ List<HabitLog> _getEventsForDay(DateTime day) {
                                     style: Theme.of(context).textTheme.labelLarge!.copyWith(color: Theme.of(context).colorScheme.surfaceContainerHighest),
                                   ),
                                 ),
-
-                                const SizedBox(height: 10),
                                 
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
@@ -671,7 +705,7 @@ List<HabitLog> _getEventsForDay(DateTime day) {
               _selectedDayLogs = [];
             });
           },
-          child: const Text("Close"),
+          child: Text("Close", style: Theme.of(context).textTheme.labelLarge),
         ),
       ),
     ],
